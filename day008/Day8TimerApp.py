@@ -12,7 +12,7 @@ print("Timer finished!")
 
 
 
-#This is a test to see if I successfuly synced in Github!
+#This is a test to see if I successfuly synced my local env and Github!
 #Notes
 #timerの表示が２→Finished!となるのはUX的に良くない
 #2-->1-->Finished!となったほうが自然
