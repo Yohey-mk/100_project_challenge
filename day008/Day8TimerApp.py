@@ -1,7 +1,22 @@
 #Day8 Countdown Timer App
 
-import time
 import tkinter as tk
+
+def start_timer(seconds):
+    def countdown():
+        nonlocal seconds
+        if seconds >= 0:
+            mins, secs = divmod(seconds, 60)
+            time_str = f"{mins:02}:{secs:02}"
+            label.config(text=time_str)
+            seconds -= 1
+            root.after(1000, countdown)
+        else:
+            label.config(text="Finished!")
+    countdown()
+
+def set_time(seconds):
+    start_timer(seconds)
 
 root = tk.Tk()
 root.title("Focus Timer")
@@ -9,10 +24,6 @@ root.geometry("300x200")
 label = tk.Label(root, text="Welcome to the Focus Timer!")
 label.pack()
 
-def set_time(seconds):
-    global selected_time
-    selected_time = seconds
-    root.destroy()
 
 btn_10 = tk.Button(root, text="10min", command=lambda: set_time(10 * 60))
 btn_25 = tk.Button(root, text="25min", command=lambda: set_time(25 * 60))
