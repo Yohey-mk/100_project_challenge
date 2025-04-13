@@ -1,11 +1,10 @@
-#Day9 Test(Github)
+#Day9 パスワード強度チェッカー
 
-#test
-import tkinter as tk
 
-root = tk.Tk()
-root.title("Test Window")
-root.geometry("200x100")
-label = tk.Label(root, text="Hello Tkinter!")
-label.pack()
-root.mainloop()
+
+
+
+
+#Learning Notes
+#まず最初にやることを定義する。何が必要か？どのような仕組みか？を階層的に明示してみる。
+#
