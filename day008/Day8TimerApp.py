@@ -10,68 +10,59 @@ label.pack()
 
 running = False
 end_flg = False
+stop_flg = False
 
 def timer_main(seconds):
     def countdown():
-        nonlocal seconds
-        if running and seconds >= 0:
-            mins, secs = divmod(seconds, 60)
+        #nonlocal seconds
+        global current_time #外部のcurrent_timeを更新する
+        if running and current_time >= 0:
+            mins, secs = divmod(current_time, 60)
             time_str = f"{mins:02}:{secs:02}"
             label.config(text=time_str)
-            seconds -= 1
+            #seconds -= 1
+            current_time -= 1
             root.after(1000, countdown)
         elif not running and not end_flg:
             label.config(text="Timer Paused")
-        elif not running and end_flg:
-            label.config(text="Timer Ended.") 
+        elif end_flg:
+            label.config(text="Timer Ended") 
         else:
             label.config(text="Finished!")
     countdown()
 
 #Toggleボタンの導入、タイマー開始/停止時の挙動を制御
 def toggle_buttons(state):
-    if not running and not end_flg:
-        btn_10.config(state="normal")
-        btn_25.config(state="normal")
-        btn_50.config(state="normal")
-        start_btn.config(state="normal")
-        stop_btn.config(state="disabled")
-        end_btn.config(state="disabled")
-        start_manual_btn.config(state="normal")
-    elif running and not end_flg:
-        btn_10.config(state="disabled")
-        btn_25.config(state="disabled")
-        btn_50.config(state="disabled")
-        start_btn.config(state="disabled")
-        stop_btn.config(state="normal")
-        end_btn.config(state="normal")
-        start_manual_btn.config(state="disabled")
-    elif not running and end_flg:
-        btn_10.config(state="normal")
-        btn_25.config(state="normal")
-        btn_50.config(state="normal")
-        start_btn.config(state="normal")
-        stop_btn.config(state="disabled")
-        end_btn.config(state="disabled")
-        start_manual_btn.config(state="normal")
-    else:
-        return
+    btn_10.config(state=state)
+    btn_25.config(state=state)
+    btn_50.config(state=state)
+    start_manual_btn.config(state=state)
+    start_btn.config(state=state)
+    #Stop/Endは逆にする
+    stop_btn.config(state="normal" if state == "disabled" else "disabled")
+    end_btn.config(state="normal" if state == "disabled" else "disabled")
+
+
 #Startボタンの挙動
 def start_button():
     global running
+    if running:
+        return
+    if current_time <= 0:
+        label.config(text="Please set a time before starting.")
+        return
     running = True
     toggle_buttons("disabled")
-    timer_main(current_time)
+    timer_main(current_time) #timer_main()を呼び出すのはタイマーをスタートするとき
 
 start_btn = tk.Button(root, text="Start", command=start_button)
 start_btn.pack()
 
 #Stopボタンの挙動→一時停止にする
 def stop_button():
-    global running
-    global end_flg
+    global running, stop_flg
     running = False
-    end_flg = False
+    stop_flg = True
     toggle_buttons("normal")
     label.config(text="Timer Paused")
     
@@ -84,24 +75,24 @@ def end_button():
     running = False
     end_flg = True
     toggle_buttons("normal")
-    label.config(text="Timer Ended")
 
 end_btn = tk.Button(root, text="End", command=end_button)
 end_btn.pack()
 
 #秒数の管理状態
 current_time = 0
-def set_time(seconds):
+def set_time(seconds, label_minutes): #start_manual_buttonで設定した時間もここで受け取る
     global current_time
     if running:
         return #タイマー実行中ならtimer_main()の呼び出しを無視する
     current_time = seconds
-    timer_main(current_time)
+    if label_minutes:
+        label.config(text=f"Set: {label_minutes}min\nPress Start")#label_minutesを受け取り、表示
 
 
-btn_10 = tk.Button(root, text="10min", command=lambda: set_time(10 * 60))
-btn_25 = tk.Button(root, text="25min", command=lambda: set_time(25 * 60))
-btn_50 = tk.Button(root, text="50min", command=lambda: set_time(50 * 60))
+btn_10 = tk.Button(root, text="10min", command=lambda: set_time(10 * 60, 10))#(10 * 60, 10)の, 10-->これがラベル表示に使われる？
+btn_25 = tk.Button(root, text="25min", command=lambda: set_time(25 * 60, 25))
+btn_50 = tk.Button(root, text="50min", command=lambda: set_time(50 * 60, 50))
 
 btn_10.pack()
 btn_25.pack()
@@ -112,64 +103,20 @@ entry.pack()
 
 def start_manual_button():
     try:
-        global running, end_flg
-        running = True
-        end_flg = False
+        global current_time
         mins = int(entry.get())
-        set_time(mins * 60)
-        toggle_buttons("disabled")
+        current_time = mins * 60
+        set_time(current_time, mins)#(10 * 60, 10)の", 10"と同じ要領で、",mins"を追加→Set a timerを押すと、10minなどを押したときと同じ挙動になった
+        label.config(text=f"Set: {mins}min\nPress Start")
+        #timer_main(current_time) --> current_timeに時間をセットするだけにして、Startボタンでタイマーを開始するように制御しなおす
     except ValueError:
         print("Please enter a valid number.")
 
-start_manual_btn = tk.Button(root, text="Start Manual", command=start_manual_button)
+start_manual_btn = tk.Button(root, text="Set a timer", command=start_manual_button)
 start_manual_btn.pack()
 
 root.mainloop()
 
-#↓CLIで操作していたパターン
-#def focus_template():
-#    try:
-#        user_options = [10, 25, 50]
-#        print(f"1. {user_options[0]}mins")
-#        print(f"2. {user_options[1]}mins")
-#        print(f"3. {user_options[2]}mins")
-#        print(f"4. Enter focus time manually.")
-#        print(f"5. Add focus time template.") #後で実装
-#        print("Enter Q to quit")
-#        user_choice = input("Choose focus time from the list above:")
-#        if user_choice == "1":
-#            print(f"Okay! Let's focus for {user_options[0]}mins!")
-#            return int(user_options[0]) * 60
-#        elif user_choice == "2":
-#            print(f"Okay! Let's focus for {user_options[1]}mins!")
-#            return int(user_options[1]) * 60
-#        elif user_choice == "3":
-#            print(f"Okay! Let's focus for {user_options[2]}mins!")
-#            return int(user_options[2]) * 60
-#        elif user_choice == "4":
-#            focus_time_input = input("Enter the time you want to focus: ")
-#            return int(focus_time_input) * 60
-#        elif user_choice == "q":
-#            exit()
-#        else:
-#            return
-#    except ValueError:
-#        print("Invalid input. Enter again.")
-#        return focus_template()
-#
-#def user_input():
-#    time_select = int(input("Enter the minutes you want to focus: "))
-#    return time_select * 60
-# 
-#for time_remaining in range(focus_template(), 0, -1):
-#    minutes_left, seconds_left = divmod(time_remaining, 60)
-#    print(f"{minutes_left:02}:{seconds_left:02}")
-#    time.sleep(1)
-#print("Timer finished!")
-
-
-
-#This is a test to see if I successfuly synced my local env and Github!
 #Notes
 #✔timerの表示が２→Finished!となるのはUX的に良くない
 #✔2-->1-->Finished!となったほうが自然
@@ -190,4 +137,16 @@ root.mainloop()
 #つまり、running flgがTrue/FalseでStart/Stopを制御する(True = 1, False = 0なので)
 #課題：いくつもボタンを押すと、同時に複数のタイマーが開始されるので、もしすでにタイマーが動いている場合は、
 #他の時間のボタンやマニュアル入力をしても機能しないようにする
-
+#実際にはもうstop_flgは不要。running, current_timeで制御可能
+#globalの使い方って？→defの外側で定義された値を持ってくる？（今回だとcurrent_time）
+#last to do --> 10min, 25min, 50minを押したとき、set for x min!と表示させる --> set_time()関数を修正する
+#How? set_time(x * y, z) --> , zの部分を追加。ここがラベルになるっぽい？
+#btn_10 = tk.Button(root, text="10min", command=lambda: set_time(10 * 60, 10))
+#label_minutesを追加、label.configで押下された時間をセットし表示する
+#def set_time(seconds, label_minutes): 
+#    global current_time
+#    if running:
+#        return #タイマー実行中ならtimer_main()の呼び出しを無視する
+#    current_time = seconds
+#    if label_minutes:
+#        label.config(text=f"Set: {label_minutes}min\nPress Start")#label_minutesを受け取り、表示
