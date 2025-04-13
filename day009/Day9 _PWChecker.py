@@ -2,10 +2,15 @@
 import string
 
 def check_password(password):
+    score = 0
+    #最初に長さ、英数字大文字・小文字が含まれているかチェックする
     if len(password) < 8:
         return "Password is too short!"
     if not any(char.isdigit() for char in password):
         return "Password must have at least one digit."
+    if not any(char.isalpha() for char in password):
+        return "Password must have at least one letter."
+    
     else:
         return "Your password is strong."
     
@@ -28,4 +33,4 @@ print(result)
 
 #Ideas
 #most common passwordsのリストをcsvなどで作成し、それをインポートして、
-#ユーザーが入力したパスワードと一致しているかチェックする。もし一致した場合はAlert!
+#ユーザーが入力したパスワードと一致しているかチェックする。もし一致した場合はAlertを出す
