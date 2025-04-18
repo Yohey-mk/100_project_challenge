@@ -3,11 +3,37 @@ import string
 import csv #csvにあるリストを使いPWの脆弱性をチェックする
 import random #password genに使う
 import re #連続文字のチェックに使う
+import flet as ft
 
 
+
+def main(page: ft.Page):
+    # 入力欄
+    input_field = ft.TextField(label="Enter your password")
+
+    # 結果表示ラベル（色付き）
+    result_text = ft.Text(value="", color="black")
+
+    # パスワードの長さ調節スライダー
+    pw_length_slider = ft.Slider(min=8, max=100, value=12, divisions=92, label="{value}", width=300)
+
+    # 生成されたパスワード表示欄
+    generated_pw_field = ft.TextField(label="Generated Password", read_only=True)
+
+    # ボタン押下時の処理
+    def check_clicked(e):
+        print(f"入力されたパスワード: {input_field.value}")
+
+    # チェックボタン
+    check_button = ft.ElevatedButton(text="Check Password", on_click=check_clicked)
+
+    # ページに追加
+    page.add(input_field, check_button)
+
+ft.app(target=main)
 
 #CSVからPWリストを読み込む
-def load_pw_list(csv_filename="Most_common_passwords"): #get_csv_list()とかを作成して、CSVのアップロード/読み込み機能をつける、または指定フォルダのCheck用PW保管用のCSVファイルを表示する？
+def load_pw_list(csv_filename="Most_common_passwords.csv"): #get_csv_list()とかを作成して、CSVのアップロード/読み込み機能をつける、または指定フォルダのCheck用PW保管用のCSVファイルを表示する？
     with open(csv_filename, newline='') as csvfile:
         return {row[0] for row in csv.reader(csvfile)} #❓️row[0] for row in...-->1列目の数だけ1列目を返す、という読み方で合っている？
 
