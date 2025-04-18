@@ -20,15 +20,55 @@ def main(page: ft.Page):
     # 生成されたパスワード表示欄
     generated_pw_field = ft.TextField(label="Generated Password", read_only=True)
 
-    # ボタン押下時の処理
+    # ボタン押下時の処理（パスワード✅️のロジック）
     def check_clicked(e):
-        print(f"入力されたパスワード: {input_field.value}")
+        password = input_field.value
+        result = check_password(password) #作成したcheck_password関数を持ってきている？
+        result_text.value = result
+        # パスワードの強度に応じて色を変える
+        if "strong" in result.lower():
+            result_text.color = "green"
+        else:
+            result_text.color = "red"
+        page.update()
+        #print(f"入力されたパスワード: {input_field.value}") #uncommented for debugging
 
-    # チェックボタン
+    #パスワード生成のロジック
+    def generate_clicked(e): #(e)って何？
+        length = int(pw_length_slider.value)
+        gen_password = generate_password(length)#
+        generated_pw_field.value = gen_password
+        input_field.value = gen_password
+        page.update() #最初page.updateと記載し()をつけるのを忘れていた→動作しないので、()を忘れずに！
+
+    #CLI版で作ったgenerate_password()関数をGUI版に再利用
+    def generate_password(length):
+        char_pool = [
+                random.choice(string.ascii_lowercase),
+                random.choice(string.ascii_uppercase),
+                random.choice(string.digits),
+                random.choice(string.punctuation)
+            ]
+        rest_characters = string.ascii_letters + string.digits + string.punctuation
+        char_pool += [random.choice(rest_characters) for _ in range(length - 4)]
+        random.shuffle(char_pool)
+        return ''.join(char_pool)
+
+    # チェックボタン, 生成ボタン
     check_button = ft.ElevatedButton(text="Check Password", on_click=check_clicked)
+    generate_button = ft.ElevatedButton(text="Generate Password", on_click=generate_clicked)#on_click=xyzで、clickをトリガーにxyzを実行する？
 
-    # ページに追加
-    page.add(input_field, check_button)
+
+    # UIをページに追加
+    page.add(
+        input_field,
+        check_button,
+        result_text,
+        ft.Divider(),
+        ft.Text("Password Length: "),
+        pw_length_slider,
+        generate_button,
+        generated_pw_field)
 
 ft.app(target=main)
 
@@ -114,7 +154,7 @@ def user_options():
 
 
 
-user_options()
+#user_options()
 
 #Learning Notes
 #まず最初にやることを定義する。何が必要か？どのような仕組みか？を階層的に明示してみる。
