@@ -6,6 +6,7 @@ import csv #csvにあるリストを使いPWの脆弱性をチェックする
 import random #password genに使う
 import re #連続文字のチェックに使う
 import flet as ft
+import asyncio
 
 # 2. sub-functions (load_pw_list --> repeated_check --> check_password --> generate_password)
 #check_passwordがnot definedとエラーを返す→原因は、check_password関数が、def main()よりも後に定義されていたため、main()より前に持ってきた
@@ -93,10 +94,34 @@ def main(page: ft.Page):
         random.shuffle(char_pool)
         return ''.join(char_pool)
 
+        #Copyボタンの挙動を制御 --> Copy Passwordを押すと、Copied!に１秒間表示を変える。その後、またCopy Passwordの表記に戻す。
+        #acyncioをimportして、制御する。
+    async def copy_clicked(e):
+        e.page.set_clipboard(generated_pw_field.value)
+
+        #change button text
+        copy_button.text = "Copied!"
+        page.update()
+
+        #waits 1sec
+        await asyncio.sleep(1)
+
+        #Change back to default
+        copy_button.text = "Copy Password"
+        page.update()
+
+        #Show SnackBar
+        e.page.snack_bar = ft.SnackBar(
+            content=ft.Text("Copied!"),
+            behavior="floating",
+            duration=1000
+        )
+        e.page.update()
+
     # チェックボタン, 生成ボタン
     check_button = ft.ElevatedButton(text="Check Password", on_click=check_clicked)
     generate_button = ft.ElevatedButton(text="Generate Password", on_click=generate_clicked)#on_click=xyzで、clickをトリガーにxyzを実行する？
-
+    copy_button = ft.ElevatedButton(text="Copy Password", on_click=copy_clicked)
 
     # UIをページに追加
     page.add(
@@ -107,59 +132,58 @@ def main(page: ft.Page):
         ft.Text("Password Length: "),
         pw_length_slider,
         generate_button,
-        generated_pw_field)
-
+        generated_pw_field,
+        copy_button)
 
 # 4. flet.app(target=main)
 ft.app(target=main)
     
+
 #↓def user_options()の条件分岐に組み込んだのでコメントアウト。学びの記録としては残しておく。
 #def generate_password(char_length=gen_length):
 #    char_length = string.ascii_letters + string.digits + string.punctuation
 #    return ''.join(random.choice(char_length) for _ in range(gen_length)) #gen pwにlower/upper caseのどちらも含める
     
-
-def user_options():
-    print("""Choose your option:
-          1)Generate password
-          2)Check your password strength""")
-    user_choice = input("Enter your option: ")
-    if user_choice == "1":
-        gen_length = int(input("Set a length of password generation.\nChoose numbers between 8 - 100: ")) #後に数字/アルファベット（大文字小文字）/記号オンリーなどの組み合わせを選べるようにする
-        if gen_length < 8 or gen_length > 100:
-            print("Length must be between 8 and 100.")
-            return
-        else:
-            #❓️↓のランダム生成だと、意図した挙動（大文字・小文字と数字記号をすべて組み合わせる）にならないので、改善が必要
-            #char_length = string.ascii_lowercase + string.ascii_uppercase + string.digits + string.punctuation
-            #gen_password = ''.join(random.choice(char_length) for _ in range(gen_length)) #gen pwにlower/upper caseのどちらも含める
-            #✅️Newランダムパスワード生成↓ char_poolに使われる文字列（lowercase, uppercase, digits, punctuation）を格納する
-            char_pool = [
-                random.choice(string.ascii_lowercase),
-                random.choice(string.ascii_uppercase),
-                random.choice(string.digits),
-                random.choice(string.punctuation)
-            ]
-            #rest_charactersはletters,digits,punctuationで構成、char_poolは設定したPWの文字数マイナス4をした残りの数だけ、rest_charactersから英数字記号を持ってくる
-            if gen_length:
-                rest_characters = string.ascii_letters + string.digits + string.punctuation
-                #char_pool +=[]で、もともと生成したchar_pool(4文字)に加えて、英数字記号を加える
-                char_pool += [random.choice(rest_characters) for _ in range(gen_length - 4)]
-            #random.choice(x)は、xの中からランダムに選択する、random.shuffle(y)は、yをランダムに入れ替える
-            random.shuffle(char_pool)#ここで最初に生成した4文字+(gen_length-4)の生成した文字列を入れ替える
-            gen_password = ''.join(char_pool)
-            print(f"Generated password: {gen_password}")
-    elif user_choice == "2":
-        password = input("Enter your password: ")
-        if not password.strip(): #空白を入力された場合の対処
-            print("Password cannot be empty.")
-            return
-        result = check_password(password)
-        print(result)
-    else:
-        print("Invalid option. Please choose 1 or 2.")
-
-
+#GUI版に移行するのでコメントアウト
+#def user_options():
+#    print("""Choose your option:
+#          1)Generate password
+#          2)Check your password strength""")
+#    user_choice = input("Enter your option: ")
+#    if user_choice == "1":
+#        gen_length = int(input("Set a length of password generation.\nChoose numbers between 8 - 100: ")) #後に数字/アルファベット（大文字小文字）/記号オンリーなどの組み合わせを選べるようにする
+#        if gen_length < 8 or gen_length > 100:
+#            print("Length must be between 8 and 100.")
+#            return
+#        else:
+#            #❓️↓のランダム生成だと、意図した挙動（大文字・小文字と数字記号をすべて組み合わせる）にならないので、改善が必要
+#            #char_length = string.ascii_lowercase + string.ascii_uppercase + string.digits + string.punctuation
+#            #gen_password = ''.join(random.choice(char_length) for _ in range(gen_length)) #gen pwにlower/upper caseのどちらも含める
+#            #✅️Newランダムパスワード生成↓ char_poolに使われる文字列（lowercase, uppercase, digits, punctuation）を格納する
+#            char_pool = [
+#                random.choice(string.ascii_lowercase),
+#                random.choice(string.ascii_uppercase),
+#                random.choice(string.digits),
+#                random.choice(string.punctuation)
+#            ]
+#            #rest_charactersはletters,digits,punctuationで構成、char_poolは設定したPWの文字数マイナス4をした残りの数だけ、rest_charactersから英数字記号を持ってくる
+#            if gen_length:
+#                rest_characters = string.ascii_letters + string.digits + string.punctuation
+#                #char_pool +=[]で、もともと生成したchar_pool(4文字)に加えて、英数字記号を加える
+#                char_pool += [random.choice(rest_characters) for _ in range(gen_length - 4)]
+#            #random.choice(x)は、xの中からランダムに選択する、random.shuffle(y)は、yをランダムに入れ替える
+#            random.shuffle(char_pool)#ここで最初に生成した4文字+(gen_length-4)の生成した文字列を入れ替える
+#            gen_password = ''.join(char_pool)
+#            print(f"Generated password: {gen_password}")
+#    elif user_choice == "2":
+#        password = input("Enter your password: ")
+#        if not password.strip(): #空白を入力された場合の対処
+#            print("Password cannot be empty.")
+#            return
+#        result = check_password(password)
+#        print(result)
+#    else:
+#        print("Invalid option. Please choose 1 or 2.")
 
 #user_options()
 
