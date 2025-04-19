@@ -1,12 +1,51 @@
 #Day9 パスワード強度チェッカー
+
+# 1. Library Imports
 import string
 import csv #csvにあるリストを使いPWの脆弱性をチェックする
 import random #password genに使う
 import re #連続文字のチェックに使う
 import flet as ft
 
+# 2. sub-functions (load_pw_list --> repeated_check --> check_password --> generate_password)
+#check_passwordがnot definedとエラーを返す→原因は、check_password関数が、def main()よりも後に定義されていたため、main()より前に持ってきた
+#同じ要因で、check_passworをdef main()よりも前に持ってくると、今度はload_pw_listがnot definedになる。
+#-->したがって、関数を定義していく順番を考慮して、並べないといけない。
+#CSVからPWリストを読み込む
+def load_pw_list(csv_filename="Most_common_passwords.csv"): #get_csv_list()とかを作成して、CSVのアップロード/読み込み機能をつける、または指定フォルダのCheck用PW保管用のCSVファイルを表示する？
+    with open(csv_filename, newline='') as csvfile:
+        return {row[0] for row in csv.reader(csvfile)} #❓️row[0] for row in...-->1列目の数だけ1列目を返す、という読み方で合っている？
 
+#連続文字のチェック(同じ文字が repeat_count 回以上連続しているかチェック（例: aaa, 1111）)
+def repeated_characters_check(password, repeat_count=3):
+    return bool(re.search(rf'(.)\1{{{repeat_count - 1},}}', password)) #bool以降の使い方？？
 
+def check_password(password):
+    score = 0 #scoreベースにしないなら不要
+    message = [] #message.append("エラーの理由")といった感じで何故判定がアウトになるかをユーザーに提示する
+    #passwordがtoo commonかCheck
+    common_pw_list = load_pw_list("Most_common_passwords.csv")
+    if password in common_pw_list:
+        message.append("Too common")
+    #最初に長さ、英数字大文字・小文字が含まれているかチェックする
+    if len(password) < 8:
+        message.append("Too short")
+    if not any(char.isdigit() for char in password):
+        message.append("Missing digit")
+    if not any(char.isalpha() for char in password):
+        message.append("Missing letter")
+    if not any(char.islower() for char in password) or not any(char.isupper() for char in password):
+        message.append("Needs both lower and upper case letters")
+    if not any(char in string.punctuation for char in password):
+        message.append("Missing special letter")  
+    if repeated_characters_check(password):
+        message.append("Contains repeated characters")
+    if not message:
+        return "Your password is strong"
+    else:
+        return "Weak password. Needs to improve: " + ', '.join(message)
+
+# 3. main function(Flet UI構成)
 def main(page: ft.Page):
     # 入力欄
     input_field = ft.TextField(label="Enter your password")
@@ -70,41 +109,9 @@ def main(page: ft.Page):
         generate_button,
         generated_pw_field)
 
+
+# 4. flet.app(target=main)
 ft.app(target=main)
-
-#CSVからPWリストを読み込む
-def load_pw_list(csv_filename="Most_common_passwords.csv"): #get_csv_list()とかを作成して、CSVのアップロード/読み込み機能をつける、または指定フォルダのCheck用PW保管用のCSVファイルを表示する？
-    with open(csv_filename, newline='') as csvfile:
-        return {row[0] for row in csv.reader(csvfile)} #❓️row[0] for row in...-->1列目の数だけ1列目を返す、という読み方で合っている？
-
-#連続文字のチェック(同じ文字が repeat_count 回以上連続しているかチェック（例: aaa, 1111）)
-def repeated_characters_check(password, repeat_count=3):
-    return bool(re.search(rf'(.)\1{{{repeat_count - 1},}}', password)) #bool以降の使い方？？
-
-def check_password(password):
-    score = 0 #scoreベースにしないなら不要
-    message = [] #message.append("エラーの理由")といった感じで何故判定がアウトになるかをユーザーに提示する
-    #passwordがtoo commonかCheck
-    common_pw_list = load_pw_list("Most_common_passwords.csv")
-    if password in common_pw_list:
-        message.append("Too common")
-    #最初に長さ、英数字大文字・小文字が含まれているかチェックする
-    if len(password) < 8:
-        message.append("Too short")
-    if not any(char.isdigit() for char in password):
-        message.append("Missing digit")
-    if not any(char.isalpha() for char in password):
-        message.append("Missing letter")
-    if not any(char.islower() for char in password) or not any(char.isupper() for char in password):
-        message.append("Needs both lower and upper case letters")
-    if not any(char in string.punctuation for char in password):
-        message.append("Missing special letter")  
-    if repeated_characters_check(password):
-        message.append("Contains repeated characters")
-    if not message:
-        return "Your password is strong"
-    else:
-        return "Weak password. Needs to improve: " + ', '.join(message)
     
 #↓def user_options()の条件分岐に組み込んだのでコメントアウト。学びの記録としては残しておく。
 #def generate_password(char_length=gen_length):
