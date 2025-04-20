@@ -1,7 +1,7 @@
 #Day10 Unit Converter単位変換アプリ
 
 ###imports###
-
+import flet as ft
 
 ###sub-functions###
 #km to mile
@@ -25,10 +25,12 @@ def fahrenheit_to_celsius(fahrenheit):
     return celsius
 
 ###main###
-
+def main(ft.page):
+    value_input = ft.TextField(label="Enter number/time: ")
+    #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
 
 ###app###
-
+ft.app(target=main)
 
 
 
