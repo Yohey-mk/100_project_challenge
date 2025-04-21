@@ -34,27 +34,55 @@ def timezone_converter(time, timezone_a, timezone_b):
 
 ###main###
 def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述すること！
-    value_input = ft.TextField(label="Enter number/time: ", width=300)
+    input_field = ft.TextField(label="Enter number/time: ", width=300)
     #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
-    dropdown_list = ft.Dropdown(
-        convert_menu=[
+    #dropdownに渡せるのはlabel, options, value, on_changeなどの公式引数のみ（最初convert_menu=[ft.dropdown.Option...]と書いてエラーになっていた）
+    #value="Timezone" -->これは、ドロップダウンのデフォルトの選択肢を決めている。
+    convert_menu = ft.Dropdown(
+        label="Options: ",
+        options=[
             ft.dropdown.Option("Timezone"),
             ft.dropdown.Option("km <-> mile"),
-            ft.dropdown.Option("Fahrenheigt <-> celsius")],
+            ft.dropdown.Option("Fahrenheit <-> Celsius")],
+    )
+    #Timezone変換用のサブオプション
+    timezone_from = ft.Dropdown(
+        label="From",
         options=[
-        ft.dropdown.Option("Asia/Tokyo"),
-        ft.dropdown.Option("UTC"),],
-    value="Asia/Tokyo"
+            ft.dropdown.Option("Asia/Tokyo"),
+            ft.dropdown.Option("UTC")],
+        value="Asia/Tokyo"
+    )
+
+    timezone_to = ft.Dropdown(
+        label="To",
+        options=[
+            ft.dropdown.Option("Asia/Tokyo"),
+            ft.dropdown.Option("UTC")],
+        value="UTC"
     )
     converted_text = ft.Text("Converted: ")
 
     #converter function
     def converter(e):
-        if convert_menu.value == "Timezone":
+        convert_menu = convert_menu.value
+        if convert_menu == "Timezone":
             try:
+                #選択したプルダウンがTimezoneの場合、入力した文字列をdatetimeに変換
+                print("Timezone selected")
                 pass
             except Exception as ex:
-                result_text.value = f"Error: {ex}"
+                converted_text.value = f"Error: {ex}"
+
+
+    #UI設定
+    page.add(
+        convert_menu,
+        input_field,
+        converted_text
+    )
+
+
 ###app###
 ft.app(target=main)
 
