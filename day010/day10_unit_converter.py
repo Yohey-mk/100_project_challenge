@@ -2,6 +2,8 @@
 
 ###imports###
 import flet as ft
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 ###sub-functions###
 #km to mile
@@ -24,11 +26,35 @@ def fahrenheit_to_celsius(fahrenheit):
     celsius = (fahrenheit - 32) * 5/9
     return celsius
 
-###main###
-def main(ft.page):
-    value_input = ft.TextField(label="Enter number/time: ")
-    #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
+#Timezone A to B
+def timezone_converter(time, timezone_a, timezone_b):
+    timezone_difference = timezone_b - timezone_a
+    converted_time = time + timezone_difference
+    return converted_time
 
+###main###
+def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述すること！
+    value_input = ft.TextField(label="Enter number/time: ", width=300)
+    #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
+    dropdown_list = ft.Dropdown(
+        convert_menu=[
+            ft.dropdown.Option("Timezone"),
+            ft.dropdown.Option("km <-> mile"),
+            ft.dropdown.Option("Fahrenheigt <-> celsius")],
+        options=[
+        ft.dropdown.Option("Asia/Tokyo"),
+        ft.dropdown.Option("UTC"),],
+    value="Asia/Tokyo"
+    )
+    converted_text = ft.Text("Converted: ")
+
+    #converter function
+    def converter(e):
+        if convert_menu.value == "Timezone":
+            try:
+                pass
+            except Exception as ex:
+                result_text.value = f"Error: {ex}"
 ###app###
 ft.app(target=main)
 
