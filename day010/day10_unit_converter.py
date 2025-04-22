@@ -34,6 +34,7 @@ def timezone_converter(time, timezone_a, timezone_b):
 
 ###main###
 def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述すること！
+    #input_fieldは、日時変換とUnit変換では形式が違うから分岐させたほうがいい？Ex. 最初にOptionsを選ばせる→Optionに応じた変換フィールド(input)を作成する？
     input_field = ft.TextField(label="Enter number/time: ", width=300)
     #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
     #dropdownに渡せるのはlabel, options, value, on_changeなどの公式引数のみ（最初convert_menu=[ft.dropdown.Option...]と書いてエラーになっていた）
@@ -52,7 +53,8 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         options=[
             ft.dropdown.Option("Asia/Tokyo"),
             ft.dropdown.Option("UTC")],
-        value="Asia/Tokyo"
+        value="Asia/Tokyo",
+        visible=True
     )
 
     timezone_to = ft.Dropdown(
@@ -60,7 +62,8 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         options=[
             ft.dropdown.Option("Asia/Tokyo"),
             ft.dropdown.Option("UTC")],
-        value="UTC"
+        value="UTC",
+        visible=True
     )
     converted_text = ft.Text("Converted: ")
 
@@ -76,23 +79,27 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
             timezone_from.visible = False
             timezone_to.visible = False
         page.update()
+
     convert_menu.on_change = handle_menu_change
 
     #converter function
     def converter(e):
-        if convert_menu.value == "Timezone":
-            try:
+        try:
+            if convert_menu.value == "Timezone":
                 #選択したプルダウンがTimezoneの場合、入力した文字列をdatetimeに変換
                 print("Timezone selected")
                 pass
-            except Exception as ex:
-                converted_text.value = f"Error: {ex}"
-        elif convert_menu == "km -> mile":
-            num = float(input_field.value)
-            km_to_mile(num)
-            converted_text.value = f"Converted: {km_to_mile(num)}:.2f miles"
-        elif convert_menu == "Fahrenheit <-> Celsius":
-            pass
+            #最初elif convert_menu == "km -> mile"と書いていて動かなかった。.valueをつけるように注意！
+            #convert_menu は Dropdown オブジェクトそのものであり、.value を使って現在の選択値（文字列）を取得しないといけない。
+            elif convert_menu.value == "km -> mile":
+                num = float(input_field.value)
+                km_to_mile(num)
+                converted_text.value = f"Converted: {km_to_mile(num)}:.2f miles"
+            elif convert_menu.value == "Fahrenheit <-> Celsius":
+                pass
+        except Exception as ex:
+            converted_text.value = f"Error: {ex}"
+        page.update()
 
 #Buttons
     convert_button = ft.ElevatedButton("Convert", on_click=converter)
