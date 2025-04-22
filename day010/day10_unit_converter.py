@@ -42,8 +42,9 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         label="Options: ",
         options=[
             ft.dropdown.Option("Timezone"),
-            ft.dropdown.Option("km <-> mile"),
+            ft.dropdown.Option("km -> mile"),
             ft.dropdown.Option("Fahrenheit <-> Celsius")],
+        value = "Timezone"
     )
     #Timezone変換用のサブオプション
     timezone_from = ft.Dropdown(
@@ -63,22 +64,45 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
     )
     converted_text = ft.Text("Converted: ")
 
+    #選択肢によってUIを切り替える処理
+    def handle_menu_change(e):
+        if convert_menu.value == "Timezone":
+            timezone_from.visible = True
+            timezone_to.visible = True
+        elif convert_menu.value == "km -> mile":
+            timezone_from.visible = False
+            timezone_to.visible = False
+        elif convert_menu.value == "Fahrenheit <-> Celsius":
+            timezone_from.visible = False
+            timezone_to.visible = False
+        page.update()
+    convert_menu.on_change = handle_menu_change
+
     #converter function
     def converter(e):
-        convert_menu = convert_menu.value
-        if convert_menu == "Timezone":
+        if convert_menu.value == "Timezone":
             try:
                 #選択したプルダウンがTimezoneの場合、入力した文字列をdatetimeに変換
                 print("Timezone selected")
                 pass
             except Exception as ex:
                 converted_text.value = f"Error: {ex}"
+        elif convert_menu == "km -> mile":
+            num = float(input_field.value)
+            km_to_mile(num)
+            converted_text.value = f"Converted: {km_to_mile(num)}:.2f miles"
+        elif convert_menu == "Fahrenheit <-> Celsius":
+            pass
 
+#Buttons
+    convert_button = ft.ElevatedButton("Convert", on_click=converter)
 
     #UI設定
     page.add(
         convert_menu,
+        ft.Row([timezone_from, timezone_to]),
         input_field,
+        convert_button,
         converted_text
     )
 
@@ -90,9 +114,11 @@ ft.app(target=main)
 
 
 
+#Learning notes/ideas
+#unit変換用の関数が多くて煩雑に見える。。。改善できないかな？
+#unit変換用の関数群は別途作成して、その関数群を読み込んで、選択したUnitに対応して関数を呼び出すとか？
 
-
-#ChatGPTからもらった課題とLearning notes
+#ChatGPTからもらった課題と
 #🎯 Day10：単位変換アプリ（Unit Converter）
 #
 #題材：
