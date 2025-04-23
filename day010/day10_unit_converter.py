@@ -34,6 +34,16 @@ def timezone_converter(time, timezone_a, timezone_b):
 
 ###main###
 def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述すること！
+    page.title = "Unit Converter"
+    #dark mode <-> light mode切り替え
+    theme_switch = ft.Switch(label="Dark mode", value=False)
+    def toggle_theme(e):
+        if theme_switch.value:
+            page.theme_mode = ft.ThemeMode.DARK
+        else:
+            page.theme_mode = ft.ThemeMode.LIGHT
+        page.update()
+    theme_switch.on_change = toggle_theme
     #input_fieldは、日時変換とUnit変換では形式が違うから分岐させたほうがいい？Ex. 最初にOptionsを選ばせる→Optionに応じた変換フィールド(input)を作成する？
     input_field = ft.TextField(label="Enter number/time: ", width=300)
     #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
@@ -94,9 +104,11 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
             elif convert_menu.value == "km -> mile":
                 num = float(input_field.value)
                 km_to_mile(num)
-                converted_text.value = f"Converted: {km_to_mile(num)}:.2f miles"
+                converted_text.value = f"Converted: {km_to_mile(num):.2f} miles"
             elif convert_menu.value == "Fahrenheit <-> Celsius":
-                pass
+                num = float(input_field.value)
+                fahrenheit_to_celsius(num)
+                converted_text.value = f"Converted: {fahrenheit_to_celsius(num):.2f} celsius"
         except Exception as ex:
             converted_text.value = f"Error: {ex}"
         page.update()
@@ -106,6 +118,7 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
 
     #UI設定
     page.add(
+        theme_switch,
         convert_menu,
         ft.Row([timezone_from, timezone_to]),
         input_field,
