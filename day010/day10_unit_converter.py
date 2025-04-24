@@ -43,9 +43,10 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         else:
             page.theme_mode = ft.ThemeMode.LIGHT
         page.update()
+    toggle_theme(None) #アプリ起動時は初期設定（ライトモード）で起動。
     theme_switch.on_change = toggle_theme
     #input_fieldは、日時変換とUnit変換では形式が違うから分岐させたほうがいい？Ex. 最初にOptionsを選ばせる→Optionに応じた変換フィールド(input)を作成する？
-    input_field = ft.TextField(label="Enter number/time: ", width=300)
+    input_field = ft.TextField(label="Format will be shown here", width=300)
     #dropdownを追加して、ドロップダウンに従い上記のvalue_inputを変換するex.num=32, dropdown=f to c --> convert to 0 in c
     #dropdownに渡せるのはlabel, options, value, on_changeなどの公式引数のみ（最初convert_menu=[ft.dropdown.Option...]と書いてエラーになっていた）
     #value="Timezone" -->これは、ドロップダウンのデフォルトの選択肢を決めている。
@@ -53,7 +54,7 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         label="Options: ",
         options=[
             ft.dropdown.Option("Timezone"),
-            ft.dropdown.Option("km -> mile"),
+            ft.dropdown.Option("km <-> mile"),
             ft.dropdown.Option("Fahrenheit <-> Celsius")],
         value = "Timezone"
     )
@@ -75,6 +76,18 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         value="UTC",
         visible=True
     )
+
+    #conversion_dirのUI用の設定
+    conversion_dir = ft.RadioGroup(
+        content=ft.Column([
+            ft.Radio(value="km_to_mile", label="km -> mile"),
+            ft.Radio(value="mile_to_km", label="mile -> km"),
+            ft.Radio(value="fahrenheit_to_celsius", label="F -> C"),
+            ft.Radio(value="celsius_to_fahrenheit", label="C -> F")
+        ]),
+        visible=False
+    )
+
     converted_text = ft.Text("Converted: ")
 
     #選択肢によってUIを切り替える処理
@@ -82,12 +95,28 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         if convert_menu.value == "Timezone":
             timezone_from.visible = True
             timezone_to.visible = True
-        elif convert_menu.value == "km -> mile":
+            input_field.label = "Enter time (YYYY-MM-DD HH:MM:SS):" #選択肢に応じて入力フォーマットを提示する
+            conversion_dir.visible = False
+        elif convert_menu.value == "km <-> mile":
             timezone_from.visible = False
             timezone_to.visible = False
+            input_field.label = "Enter distance in kilometers:" #選択肢に応じて入力フォーマットを提示する
+            conversion_dir.content.controls = [
+                ft.Radio(value="km_to_mile", label="km -> mile"),
+                ft.Radio(value="mile_to_km", label="mile -> km")
+            ]
+            conversion_dir.visible = True
         elif convert_menu.value == "Fahrenheit <-> Celsius":
             timezone_from.visible = False
             timezone_to.visible = False
+            input_field.label = "Enter temperature in Fahrenheit:" #選択肢に応じて入力フォーマットを提示する
+            conversion_dir.content.controls = [
+                ft.Radio(value="fahrenheit_to_celsius", label="F -> C"),
+                ft.Radio(value="celsius_to_fahrenheit", label="C -> F")
+            ]
+            conversion_dir.visible = True
+        conversion_dir.update()
+        input_field.update() #input_field.update()を行い、ラベル表示をちゃんと切り替える
         page.update()
 
     convert_menu.on_change = handle_menu_change
@@ -97,18 +126,29 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         try:
             if convert_menu.value == "Timezone":
                 #選択したプルダウンがTimezoneの場合、入力した文字列をdatetimeに変換
-                print("Timezone selected")
-                pass
+                input_time = datetime.fromisoformat(input_field.value)
+                tz_from = ZoneInfo(timezone_from.value)
+                tz_to = ZoneInfo(timezone_to.value)
+                converted_time = input_time.replace(tzinfo=tz_from).astimezone(tz_to)
+                converted_text.value = f"Converted: {converted_time.strftime('%Y-%m-%d %H:%M:%S')}"
             #最初elif convert_menu == "km -> mile"と書いていて動かなかった。.valueをつけるように注意！
             #convert_menu は Dropdown オブジェクトそのものであり、.value を使って現在の選択値（文字列）を取得しないといけない。
-            elif convert_menu.value == "km -> mile":
+            elif convert_menu.value == "km <-> mile":
                 num = float(input_field.value)
-                km_to_mile(num)
-                converted_text.value = f"Converted: {km_to_mile(num):.2f} miles"
+                if conversion_dir.value == "km_to_mile": #最初"km -> mile"と記載していて動かなかった。ラベルではなくvalueの値を指定する。
+                    km_to_mile(num)
+                    converted_text.value = f"Converted: {km_to_mile(num):.2f} miles"
+                elif conversion_dir.value == "mile_to_km":
+                    mile_to_km(num)
+                    converted_text.value = f"Converted: {mile_to_km(num):.2f} km"
             elif convert_menu.value == "Fahrenheit <-> Celsius":
                 num = float(input_field.value)
-                fahrenheit_to_celsius(num)
-                converted_text.value = f"Converted: {fahrenheit_to_celsius(num):.2f} celsius"
+                if conversion_dir.value == "fahrenheit_to_celsius":
+                    fahrenheit_to_celsius(num)
+                    converted_text.value = f"Converted: {fahrenheit_to_celsius(num):.2f} celsius"
+                elif conversion_dir.value == "celsius_to_fahrenheit":
+                    celsius_to_fahrenheit(num)
+                    converted_text.value = f"Converted: {celsius_to_fahrenheit(num):.2f} °F"
         except Exception as ex:
             converted_text.value = f"Error: {ex}"
         page.update()
@@ -121,17 +161,14 @@ def main(page: ft.Page): #ft.pageでは動かなくて、ft.Pageと記述する�
         theme_switch,
         convert_menu,
         ft.Row([timezone_from, timezone_to]),
+        conversion_dir,
         input_field,
         convert_button,
         converted_text
     )
 
-
 ###app###
 ft.app(target=main)
-
-
-
 
 
 #Learning notes/ideas
