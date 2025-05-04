@@ -1,12 +1,13 @@
 # Day11 Flash Card Study App
 
 ###Imports
+import flet as ft
 import random
 import csv
 import glob #globモジュールで複数ファイルを検索する
 from datetime import datetime
 
-###Helper-functions
+###Helper-functions(background functions)
 #スキップ済みの単語を読み込む
 def load_skipped_words():
     try:
@@ -41,6 +42,8 @@ def load_cards():
     skipped_cards = dict(skipped_words)
     return cards, skipped_cards
 
+#スコアの計算式関数
+
 
 #スコア記録用の関数
 def save_score_log(correct_count, skipped_count, total_words, correct_rate):
@@ -74,16 +77,36 @@ def remove_skipped_word(eng, jp):
     except FileNotFoundError:
         print("No skipped_word_list.csv file found.")
 
-###UI Components
-
 ###App Logic
-
-###Run App
-
-###Legacy
+def show_home(page: ft.Page):
+    pass
 
 #通常ゲームの関数。復習モードをここから選べるようにする。復習モードの関数は別で作成する。
 #ループや分岐で中身が長くなっているから、役割ごとに分割して関数化したほうがいいかも？
+def show_card_normal(page: ft.Page, cards: dict):
+    eng, jp = random.choice(list(cards.items()))
+
+    def answer_submit(e):
+        answer = input_field.value.strip()
+        if answer == jp:
+            result_text.value = "Correct!"
+        else:
+            result_text.value = f"Wrong answer. Correct answer: {jp}"
+        page.update()
+    
+    input_field = ft.TextField(user_answer_field="Enter your answer", on_submit=answer_submit)
+    result_text = ft.Text("")
+    back_button = ft.ElevatedButton(text="Home", on_click=lambda e: show_home(page))
+
+    page.controls.clear()
+    page.add(
+        ft.Text(f"What does '{eng} mean?"),
+        input_field,
+        result_text,
+        back_button
+    )
+    page.update()
+
 def show_card(cards):
     print("*Press q to quit") #GUI版ではキャンセルボタンを設置し、途中でやめられるようにする
     #shuffleした辞書
@@ -166,11 +189,52 @@ def play_mode():
         else:
             print("Choose your option from 1 - 3.")
 
+###Main (GUI ver)
+def main(page: ft.Page):
+    page.title = "Flash Study"
+    theme_switch = ft.Switch(label="Dark", value=False)
+    def toggle_theme(e): #eはイベントを受け取る、fletだと基本こんな感じで書く
+        if theme_switch.value:
+            page.theme_mode = ft.ThemeMode.DARK
+        else:
+            page.theme_mode = ft.ThemeMode.LIGHT
+        page.update()
+    toggle_theme(None) #デフォルトはライトモード
+    theme_switch.on_change = toggle_theme
+    #Game Start
+    def start_game_normal(e):
+        #show_card()などをここで呼び出し、以下のボタンで選択肢に応じてゲーム開始
+        cards, _ = load_cards()
+        show_card(cards)
+    
+    def start_game_review(e):
+        skipped_cards = load_cards()
+        review_mode(skipped_cards)
 
+    def game_cancel():
+        exit()
+
+###UI Components_Buttons
+    game_start_normal_mode = ft.ElevatedButton(text="Study new words", on_click=start_game_normal)
+    game_start_review_mode = ft.ElevatedButton(text="Review mode", on_click=start_game_review)
+    game_cancel_button = ft.ElevatedButton(text="Cancel", on_click=game_cancel)
+
+###UI Components
+    page.add(
+        theme_switch,
+        game_start_normal_mode,
+        game_start_review_mode,
+        game_cancel_button
+    )
+
+###Run App
+ft.app(target=main)
+
+###Legacy
 
 ###main(CLI ver)
-if __name__ == "__main__":
-    play_mode()
+#if __name__ == "__main__":
+#    play_mode()
 
 
 #課題
