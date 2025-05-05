@@ -6,6 +6,8 @@ import random
 import csv
 import glob #globモジュールで複数ファイルを検索する
 from datetime import datetime
+import asyncio
+import os
 
 ###Helper-functions(background functions)
 #スキップ済みの単語を読み込む
@@ -42,9 +44,6 @@ def load_cards():
     skipped_cards = dict(skipped_words)
     return cards, skipped_cards
 
-#スコアの計算式関数
-
-
 #スコア記録用の関数
 def save_score_log(correct_count, skipped_count, total_words, correct_rate):
     today = datetime.now().strftime("%Y-%m-%d")
@@ -78,23 +77,31 @@ def remove_skipped_word(eng, jp):
         print("No skipped_word_list.csv file found.")
 
 ###App Logic
-def show_home(page: ft.Page):
-    pass
+#スコアの計算式関数
+def score_calculation(user_score, game_stage, skipped_word_count):
+    #setting up for starting the game
+    result_score = (user_score / (game_stage - skipped_word_count))
+    return result_score
 
 #通常ゲームの関数。復習モードをここから選べるようにする。復習モードの関数は別で作成する。
 #ループや分岐で中身が長くなっているから、役割ごとに分割して関数化したほうがいいかも？
 def show_card_normal(page: ft.Page, cards: dict):
     eng, jp = random.choice(list(cards.items()))
+    skipped_word_list = []
 
-    def answer_submit(e):
+    async def answer_submit(e):
         answer = input_field.value.strip()
         if answer == jp:
             result_text.value = "Correct!"
+        elif answer == "s":
+            skipped_word_list.append((eng, jp))
         else:
             result_text.value = f"Wrong answer. Correct answer: {jp}"
         page.update()
-    
-    input_field = ft.TextField(user_answer_field="Enter your answer", on_submit=answer_submit)
+        await asyncio.sleep(1)
+        show_card_normal(page, cards)
+
+    input_field = ft.TextField(hint_text="Enter your answer", on_submit=answer_submit)
     result_text = ft.Text("")
     back_button = ft.ElevatedButton(text="Home", on_click=lambda e: show_home(page))
 
@@ -107,72 +114,49 @@ def show_card_normal(page: ft.Page, cards: dict):
     )
     page.update()
 
-def show_card(cards):
-    print("*Press q to quit") #GUI版ではキャンセルボタンを設置し、途中でやめられるようにする
-    #shuffleした辞書
-    items = list(cards.items())
-    random.shuffle(items)
-    #setting up for starting the game
-    word_count_all = len(items)
-    user_score = 0
-    skipped_word_count = 0
-    game_stage = 0
-    skipped_word_list = []
-
-    for eng, jp in items:
-        user_input = input(f"{eng}の意味は？: ").lower()
-        game_stage += 1
-        if user_input == "q":
-            break
-        elif user_input == "s":
-            skipped_word_count += 1
-            skipped_word_list.append((eng, jp))
-            print("skipped\n")
-        else:
-            if user_input.strip() == jp:
-                user_score += 1
-                print("Correct!\n")
-            else:
-                print(f"答え: {jp}\n")
-
-    print("Finished!")
-    total_score = user_score / (game_stage - skipped_word_count) * 100
-    print(f"Your score: {total_score:.1f}%") #正答数/(総出題数-Skipped数)、改行して→総出題数X、正解数Y、Skipped数Z、残り問題数xx、、、みたいな表示のほうがユーザフレンドリーかも？
-    skipped_str_list = [f"{eng}({jp})" for eng, jp in skipped_word_list] #ここにタプルのリストを表示用の文字列に変換する
-    print(f"""Total game stage: {game_stage}
-Correct answers: {user_score}
-Skipped answers: {skipped_word_count}
-Remaining word list: {word_count_all - (user_score + skipped_word_count)}
-Skipped word(s) list: {', '.join(skipped_str_list)}""")
-    try_again = input("Would you like to try again? y/n: ").lower()
-    if try_again == "y":
-        show_card(cards)
-    else:
-        print("Great job! Have a nice day!")
-        save_score_log(user_score, skipped_word_count, game_stage, total_score)
-        skipped_words_log(skipped_word_list)
-
 #復習モードの関数
-def review_mode(skipped_cards):
-    print("Press q to quit")
-    review_items = list(skipped_cards.items())
-    random.shuffle(review_items)
+def review_mode(page: ft.Page, skipped_cards: dict):
+    eng, jp = random.choice(list(skipped_cards.items()))
 
-    for eng, jp in review_items:
-        print("*Enter r to remove the word")
-        user_input = input(f"{eng}の意味は？: ").lower()
-        if user_input == "q":
-            break
-        elif user_input == "r":
-            remove_skipped_word(eng, jp)
+    async def answer_submit(e):
+        answer = input_field.value.strip()
+        if answer == "r":
+            result_text.value = "Move onto the next word"
+            page.update()
         else:
-            print(f"答え: {jp}")
-    print("Finished!")
-    try_again = input("Would you like to try again? y/n: ").lower()
-    if try_again == "y":
-        review_mode()
-    else:
-        print("Alright! Have a nice day!")
+            result_text.value = f"Answer: {jp}"
+        page.update()
+        await asyncio.sleep(1)
+        review_mode(page, skipped_cards)
+
+    input_field = ft.TextField(hint_text="Enter R if remembered", on_submit=answer_submit)
+    result_text = ft.Text("")
+    back_button = ft.ElevatedButton(text="Home", on_click=lambda e: show_home(page))
+
+    page.controls.clear()
+    page.add(
+        ft.Text(f"What does '{eng} mean?"),
+        input_field,
+        result_text,
+        back_button,
+    )
+    page.update()
+
+def quit_app(e):
+    os._exit(0)
+
+def show_home(page: ft.Page):
+    page.controls.clear() #一度ページをまっさらにして、以下にボタンなどを再配置する
+    cards, skipped_cards = load_cards()
+    home_button_normal = ft.ElevatedButton(text="Study new words", on_click=lambda e: show_card_normal(page, cards))
+    home_button_review = ft.ElevatedButton(text="Review mode", on_click=lambda e: review_mode(page, skipped_cards))
+    game_quit_button = ft.ElevatedButton(text="Quit", on_click=quit_app)
+    page.add(
+        home_button_normal,
+        home_button_review,
+        game_quit_button
+    )
+    page.update()
 
 #Play game *play modeに応じてshow_cardと復習モードを切り替える -> ###mainで呼び出すのはこちらにする。
 def play_mode():
@@ -205,11 +189,11 @@ def main(page: ft.Page):
     def start_game_normal(e):
         #show_card()などをここで呼び出し、以下のボタンで選択肢に応じてゲーム開始
         cards, _ = load_cards()
-        show_card(cards)
+        show_card_normal(page, cards)
     
     def start_game_review(e):
-        skipped_cards = load_cards()
-        review_mode(skipped_cards)
+        skipped_cards, _ = load_cards()
+        review_mode(page, skipped_cards)
 
     def game_cancel():
         exit()
@@ -231,6 +215,42 @@ def main(page: ft.Page):
 ft.app(target=main)
 
 ###Legacy
+#def show_card(cards):
+#    print("*Press q to quit") #GUI版ではキャンセルボタンを設置し、途中でやめられるようにする
+#    skipped_word_list = []
+#
+#    for eng, jp in items:
+#        user_input = input(f"{eng}の意味は？: ").lower()
+#        game_stage += 1
+#        if user_input == "q":
+#            break
+#        elif user_input == "s":
+#            skipped_word_count += 1
+#            skipped_word_list.append((eng, jp))
+#            print("skipped\n")
+#        else:
+#            if user_input.strip() == jp:
+#                user_score += 1
+#                print("Correct!\n")
+#            else:
+#                print(f"答え: {jp}\n")
+#
+#    print("Finished!")
+#    total_score = user_score / (game_stage - skipped_word_count) * 100
+#    print(f"Your score: {total_score:.1f}%") #正答数/(総出題数-Skipped数)、改行して→総出題数X、正解数Y、Skipped数Z、残り問題数xx、、、みたいな表示のほうがユーザフレンドリーかも？
+#    skipped_str_list = [f"{eng}({jp})" for eng, jp in skipped_word_list] #ここにタプルのリストを表示用の文字列に変換する
+#    print(f"""Total game stage: {game_stage}
+#Correct answers: {user_score}
+#Skipped answers: {skipped_word_count}
+#Remaining word list: {word_count_all - (user_score + skipped_word_count)}
+#Skipped word(s) list: {', '.join(skipped_str_list)}""")
+#    try_again = input("Would you like to try again? y/n: ").lower()
+#    if try_again == "y":
+#        show_card(cards)
+#    else:
+#        print("Great job! Have a nice day!")
+#        save_score_log(user_score, skipped_word_count, game_stage, total_score)
+#        skipped_words_log(skipped_word_list)
 
 ###main(CLI ver)
 #if __name__ == "__main__":
