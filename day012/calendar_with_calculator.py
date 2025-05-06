@@ -3,27 +3,36 @@
 ###imports
 from datetime import datetime, timedelta
 
-###Helper / Background functions
+# === Helper / Background functions ===
 
 
-###App Logics
+# === User Interface ===
 def get_user_input():
+    date_input = input("enter a date(yyyy-mm-dd): ")
+    base_date = datetime.strptime(date_input, "%Y-%m-%d")
+    return base_date
+
+def date_calculation(base_date):
+    input_new_date = int(input("Enter how many days before / after you want to know: "))
+    new_date_result = base_date + timedelta(input_new_date)
+    return new_date_result
+
+def print_result(): #GUI化のときに使う
     pass
 
-def date_calculation():
-    pass
+# === UI Components ===
 
-def print_result():
-    pass
-
-###Main
+# === App Logics ===
 def main():
-    pass
+    base = get_user_input()
+    base_day = base.strftime('%A')
+    new_date = date_calculation(base)
+    new_date_day = new_date.strftime('%A')
+    print_result()
+    print(f"Date: {base} ({base_day})")
+    print(f"New date: {new_date} ({new_date_day})") #debug
 
-###UI Components
-
-
-###Run App
+# === Run App ===
 if __name__ == '__main__':
     main()
 
