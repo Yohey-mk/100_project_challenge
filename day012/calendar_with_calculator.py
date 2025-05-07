@@ -1,24 +1,17 @@
 #Day 12: 電卓付きカレンダーアプリ（CLI → GUI）
 
-###imports
+# === imports ===
 from datetime import datetime, timedelta
+#moduleのimport
+from input_handler import get_user_input
+from calculator import date_calculation
+from result_display import print_result
 
 # === Helper / Background functions ===
 
 
 # === User Interface ===
-def get_user_input():
-    date_input = input("enter a date(yyyy-mm-dd): ")
-    base_date = datetime.strptime(date_input, "%Y-%m-%d")
-    return base_date
 
-def date_calculation(base_date):
-    input_new_date = int(input("Enter how many days before / after you want to know: "))
-    new_date_result = base_date + timedelta(input_new_date)
-    return new_date_result
-
-def print_result(): #GUI化のときに使う
-    pass
 
 # === UI Components ===
 
