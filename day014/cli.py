@@ -6,19 +6,25 @@
 ### === Helper functions ===
 
 #Create New Notes
-def create_new_note(user_note):
-    print(f"Added: {user_note}")
+def create_new_note(user_note,user_notebook):
+    user_notebook.append(user_note)
+    print(f"Added: {user_note}\n")
 
 #Show all notes
-def show_all_notes():
-    pass
+def show_all_notes(user_notebook):
+    if not user_notebook:
+        print("No notes found.\n")
+    else:
+        for i, note in enumerate(user_notebook, start=1):
+            print(f"{i}: {note}")
+        print("")
 
 #Update Notes *include open/modify
-def update_notes():
+def update_notes(user_notebook):
     pass
 
 #Delete Notes
-def delete_notes():
+def delete_notes(user_notebook):
     pass
 
 #Close app
@@ -27,23 +33,23 @@ def close_app():
 
 ### === App Logics ===
 def main():
-    user_notes = []
-    
-    user_input = input("Choose your option:\n1. Create a new note\n2. Show all notes\n3. Update notes\n4. Delete notes\n5. Close app")
-    if user_input == "1":
-        user_note = input("Enter your note: ")
-        create_new_note(user_note)
-    elif user_input == "q":
-        close_app()
-    else:
-        print("Invalid input. Enter 1 - 5.")
+    user_notebook = []
 
-
-### === UI Components ===
-
-
-
-### === UI Interface ===
+    while True:
+        user_input = input("Choose your option:\n1. Create a new note\n2. Show all notes\n3. Update notes\n4. Delete notes\n5. Close app\nEnter your option: ")
+        if user_input == "1":
+            user_note = input("Enter your note: ")
+            create_new_note(user_note,user_notebook)
+        elif user_input == "2":
+            show_all_notes(user_notebook)
+        elif user_input == "3":
+            update_notes(user_notebook)
+        elif user_input == "4":
+            delete_notes(user_notebook)
+        elif user_input == "5":
+            close_app()
+        else:
+            print("Invalid input. Enter 1 - 5.")
 
 
 ### === Run App ===
