@@ -1,7 +1,9 @@
 # cli.py
 
 ### === imports ===
-
+import os
+import sys
+import json
 
 ### === Helper functions ===
 
@@ -21,11 +23,50 @@ def show_all_notes(user_notebook):
 
 #Update Notes *include open/modify
 def update_notes(user_notebook):
-    pass
+    if not user_notebook: #まずはuser_notebookが空でないかcheck
+        print("No notes to update.\n")
+        return
+
+    show_all_notes(user_notebook)
+    user_pick = input("Pick which one to update(or enter q to go back): ")
+
+    if user_pick.lower() == "q":
+        return
+    
+    try:
+        update_number = int(user_pick) - 1
+        if 0 <= update_number < len(user_notebook):
+            current_note = user_notebook[update_number]
+            print(f"Current note: {current_note}\n-----------")
+            user_notebook[update_number] = input("Enter new note: ")
+            print("Note updated!\n")
+        else:
+            print("Invalid note number.\n")
+    except ValueError:
+        print("If you made a typo, try again.")
 
 #Delete Notes
 def delete_notes(user_notebook):
     pass
+
+#Save notebook
+def resource_path(filename):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys.MEIPASS, filename)
+    return os.path.join(os.path.abspath("."), filename)
+
+def save_notebook(user_notebook, filename="day14_notebook.json"):
+    path = resource_path(filename)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(user_notebook, f, ensure_ascii=False, indent=2)
+
+def load_notebook(filename="day14_notebook.json"):
+    path = resource_path(filename)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
 
 #Close app
 def close_app():
@@ -33,20 +74,24 @@ def close_app():
 
 ### === App Logics ===
 def main():
-    user_notebook = []
+    user_notebook = load_notebook()
 
     while True:
         user_input = input("Choose your option:\n1. Create a new note\n2. Show all notes\n3. Update notes\n4. Delete notes\n5. Close app\nEnter your option: ")
         if user_input == "1":
             user_note = input("Enter your note: ")
             create_new_note(user_note,user_notebook)
+            save_notebook(user_notebook)
         elif user_input == "2":
             show_all_notes(user_notebook)
         elif user_input == "3":
             update_notes(user_notebook)
+            save_notebook(user_notebook)
         elif user_input == "4":
             delete_notes(user_notebook)
+            save_notebook(user_notebook)
         elif user_input == "5":
+            save_notebook(user_notebook)
             close_app()
         else:
             print("Invalid input. Enter 1 - 5.")
@@ -74,3 +119,9 @@ if __name__ == "__main__":
 #3. メモを開く・編集する
 #4. メモを削除する
 #5. 終了
+
+#🏁 まとめ：次に進む前にやると面白い追加機能
+#	1.	ノートをファイルに保存・読み込み（JSONでやると学習にも最適）
+#	2.	ノートの更新機能（user_notebook[index] = new_note）
+#	3.	ノートの削除機能（del user_notebook[index]）
+#	4.	検索機能（if keyword in note:）
