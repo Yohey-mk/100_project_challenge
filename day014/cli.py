@@ -8,9 +8,10 @@ import json
 ### === Helper functions ===
 
 #Create New Notes
-def create_new_note(user_note,user_notebook):
-    user_notebook.append(user_note)
-    print(f"Added: {user_note}\n")
+def create_new_note(user_note_title,user_note,user_notebook):
+    note = {"title":user_note_title, "body":user_note}
+    user_notebook.append(note)
+    print(f"Added: {user_note_title}\n")
 
 #Show all notes
 def show_all_notes(user_notebook):
@@ -18,7 +19,7 @@ def show_all_notes(user_notebook):
         print("No notes found.\n")
     else:
         for i, note in enumerate(user_notebook, start=1):
-            print(f"{i}: {note}")
+            print(f"{i}: {note['title']}")
         print("")
 
 #Update Notes *include open/modify
@@ -37,8 +38,16 @@ def update_notes(user_notebook):
         update_number = int(user_pick) - 1
         if 0 <= update_number < len(user_notebook):
             current_note = user_notebook[update_number]
-            print(f"Current note: {current_note}\n-----------")
-            user_notebook[update_number] = input("Enter new note: ")
+            print(f"Current note: {current_note['title']}")
+            print(f"Current note: {current_note['body']}\n-----------")
+
+            new_title = input("Enter new title (leave blank to keep current): ")
+            new_body = input("Enter new note (leave blank to keep current): ")
+
+            if new_title:
+                current_note['title'] = new_title
+            if new_body:
+                current_note['body'] = new_body
             print("Note updated!\n")
         else:
             print("Invalid note number.\n")
@@ -56,16 +65,17 @@ def delete_notes(user_notebook):
 
         if user_pick.lower() == "q":
             print("Cancelled.\n")
+            return
 
         elif user_pick.isdigit():
             number_to_delete = int(user_pick) - 1
             if 0 <= number_to_delete < len(user_notebook):
                 note_to_delete = user_notebook[number_to_delete]
-                print(f"You chose: {note_to_delete}")
+                print(f"You chose: {note_to_delete['title']}")
                 make_sure = input("Are you sure to delete? (y/n): ").lower()
                 if make_sure == "y":
                     remove_note = user_notebook.pop(number_to_delete)
-                    print(f"Successfully removed {remove_note}.\n")
+                    print(f"Successfully removed {remove_note['title']}.\n")
                 else:
                     print("Return to home.\n")
             else:
@@ -101,12 +111,15 @@ def close_app():
 ### === App Logics ===
 def main():
     user_notebook = load_notebook()
+    print("Loaded notebook data:", user_notebook)
+    print("First note type:", type(user_notebook[0]) if user_notebook else "Empty")
 
     while True:
         user_input = input("Choose your option:\n1. Create a new note\n2. Show all notes\n3. Update notes\n4. Delete notes\n5. Close app\nEnter your option: ")
         if user_input == "1":
+            user_note_title = input("Enter your note title: ")
             user_note = input("Enter your note: ")
-            create_new_note(user_note,user_notebook)
+            create_new_note(user_note_title,user_note,user_notebook)
             save_notebook(user_notebook)
         elif user_input == "2":
             show_all_notes(user_notebook)

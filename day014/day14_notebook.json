@@ -1,5 +1,6 @@
 [
-  "is this working?",
-  "seems like it's working!",
-  "okay this is a test run!"
+  {
+    "title": "Is this fixed?",
+    "body": "I think it's been fixed!"
+  }
 ]

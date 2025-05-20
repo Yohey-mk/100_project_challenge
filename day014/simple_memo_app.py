@@ -1,13 +1,28 @@
 ### Day14: simple_memo_app.py
 
 ### === Imports ===
-
+import flet as ft
+from create_new_note import user_note_input
+from show_all_notes import show_all_notes
+from update_notes import update_notes
+from save_notebook import save_notebook,resource_path,load_notebook
+from delete_notes import delete_notes
 
 ### === Helper Functions ===
 
 
 ### === App Logics ===
+def main(page: ft.Page):
+    page.scroll = "auto"
+    page.window.resizable = True
+    page.title = "Simple Notepad"
 
+    my_notebook = load_notebook()
+
+
+    def on_submit_handler(user_note_input):
+        my_notebook.append(user_note_input)
+        save_notebook(my_notebook)
 
 ### === UI Components ===
 
