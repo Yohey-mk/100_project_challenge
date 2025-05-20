@@ -47,7 +47,33 @@ def update_notes(user_notebook):
 
 #Delete Notes
 def delete_notes(user_notebook):
-    pass
+    if not user_notebook:
+        print("No notes to delete.")
+        return
+    try:
+        show_all_notes(user_notebook)
+        user_pick = input("Which one to delete? (enter 'q' to go back): ")
+
+        if user_pick.lower() == "q":
+            print("Cancelled.\n")
+
+        elif user_pick.isdigit():
+            number_to_delete = int(user_pick) - 1
+            if 0 <= number_to_delete < len(user_notebook):
+                note_to_delete = user_notebook[number_to_delete]
+                print(f"You chose: {note_to_delete}")
+                make_sure = input("Are you sure to delete? (y/n): ").lower()
+                if make_sure == "y":
+                    remove_note = user_notebook.pop(number_to_delete)
+                    print(f"Successfully removed {remove_note}.\n")
+                else:
+                    print("Return to home.\n")
+            else:
+                print("Invalid input.\n")
+
+    except (ValueError, IndexError):
+        print("Invalid input. Please choose a valid number from the list.")
+        return
 
 #Save notebook
 def resource_path(filename):
