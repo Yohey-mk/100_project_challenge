@@ -1,2 +1,23 @@
 .DS_Store
 .venv/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+venv/
+*.log
+
+# Flet / PyInstaller
+build/
+dist/
+*.spec
+*.app
+
+# macOS 系
+.DS_Store
+
+# JSONなど、保存データ（必要に応じて）
+data.json
