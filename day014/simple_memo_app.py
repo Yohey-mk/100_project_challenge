@@ -18,20 +18,37 @@ def main(page: ft.Page):
     page.title = "Simple Notepad"
 
     my_notebook = load_notebook()
+    display_column = ft.Column()
 
 
-    def on_submit_handler(user_note_input):
-        my_notebook.append(user_note_input)
+    def on_submit_handler(note):
+        title = note["title"]
+
+        for i, existing_note in enumerate(my_notebook):
+            if existing_note["title"] == title:
+                my_notebook[i] = note
+                break
+        else:
+            my_notebook.append(note)
         save_notebook(my_notebook)
+        page.snack_bar = ft.SnackBar(ft.Text("Notes Added!"))
+        page.snack_bar.open = True
+        page.update()
+
+    create_note_ui = user_note_input(on_submit_handler)
+    show_notes_ui = show_all_notes(page, my_notebook, display_column)
 
 ### === UI Components ===
 
 
 ### === UI Interface ===
-
+    page.add(
+        create_note_ui,
+        show_notes_ui,
+    )
 
 ### === Run App ===
-
+ft.app(target=main)
 
 
 

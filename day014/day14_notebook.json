@@ -2,5 +2,25 @@
   {
     "title": "Is this fixed?",
     "body": "I think it's been fixed!"
+  },
+  {
+    "title": "GUI Title",
+    "body": "GUI Note section"
+  },
+  {
+    "title": "2nd test",
+    "body": "How did it go?"
+  },
+  {
+    "title": "test3",
+    "body": "test3notes"
+  },
+  {
+    "title": "test4",
+    "body": "test4notes"
+  },
+  {
+    "title": "Test from terminal!",
+    "body": "test from TERMINAL on Fri May 23!"
   }
 ]
