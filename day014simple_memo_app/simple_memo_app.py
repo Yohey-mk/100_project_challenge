@@ -35,15 +35,25 @@ def main(page: ft.Page):
         page.snack_bar.open = True
         page.update()
 
-    create_note_ui = user_note_input(on_submit_handler)
-    show_notes_ui = show_all_notes(page, my_notebook, display_column)
+    def on_submit_update():
+        page.controls.clear()
+        update_notes()
+        page.add()
+        page.update()
+
+    def home_button(page: ft.Page):#button -> on_click -> show all ui (again)という構造にすれば、擬似的にホーム回帰を再現可能？
+        page.add()
+        page.update()
 
 ### === UI Components ===
-
+    create_note_ui = user_note_input(on_submit_handler)
+    update_notes_ui = update_notes(page, my_notebook, display_column, show_all_notes)
+    show_notes_ui = show_all_notes(page, my_notebook, display_column)
 
 ### === UI Interface ===
     page.add(
         create_note_ui,
+        update_notes_ui,
         show_notes_ui,
     )
 

@@ -5,7 +5,7 @@ import flet as ft
 
 def user_note_input(on_submit_handler):
     note_title_field = ft.TextField(label="Title", width=300)
-    note_field = ft.TextField(label="Notes", width=300, height=500)
+    note_field = ft.TextField(label="Notes", width=300)
     
     def on_submit(e):
         note = {'title':note_title_field.value, 'body':note_field.value}
