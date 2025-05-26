@@ -3,17 +3,63 @@
 import flet as ft
 
 ### === Functions ===
-def update_notes(page:ft.Page, my_notebook, display_column, show_all_notes):
-    show_note_cards = ft.ElevatedButton(text="Show Notes",on_click=show_all_notes)
-    def on_click(e):
-        page.controls.clear()
-        choose_note = ft.TextField(label="Enter note # to update")
-        page.add(
-            ft.Text("All cleared."),
-            choose_note,
-            show_note_cards
+def update_notes(page:ft.Page, my_notebook, display_column):
+    choose_note = ft.TextField(label="Enter note # to update")
+    title_field = ft.TextField(label="Title")
+    content_field = ft.TextField(label="Content")
+
+    #Cardsでメモを表示する
+    note_cards = ft.Column()
+    for idx, note in enumerate(my_notebook):
+        card = ft.Card(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.Text(f"{idx + 1}. {note['title']}", weight="bold"),
+                    ft.Text(note['body']),
+                ]),
+                padding=10,
+            )
         )
+        note_cards.controls.append(card)
+
+    def load_note(e):
+        try:
+            idx = int(choose_note.value) - 1
+            if 0 <= idx < len(my_notebook):
+                note = my_notebook[idx]
+                title_field.value = note["title"]
+                content_field.value = note["body"]
+            else:
+                page.snack_bar = ft.SnackBar(ft.Text("Invalid note number"))
+                page.snack_bar.open = True
+        except ValueError:
+            page.snack_bar = ft.SnackBar(ft.Text("Enter a valid number"))
+            page.snack_bar.open = True
         page.update()
-    update_button = ft.ElevatedButton(text="Update", on_click=on_click)
-    return ft.Column([update_button, show_note_cards])
+
+    def save_updated_note(e):
+        idx = int(choose_note.value) - 1
+        if 0 <= idx < len(my_notebook):
+            my_notebook[idx] = {
+                "title": title_field.value,
+                "body": content_field.value
+            }
+            save_notebook(my_notebook)
+            page.snack_bar = ft.SnackBar(ft.Text("Note updated successfully!"))
+            page.snack_bar.open = True
+            page.update()
+
+    load_button = ft.ElevatedButton(text="Load", on_click=load_note)
+    save_button = ft.ElevatedButton(text="Save", on_click=save_updated_note)
+
+
+    return ft.Column([
+        ft.Text("Select a note to update"),
+        choose_note,
+        load_button,
+        title_field,
+        content_field,
+        save_button,
+        ft.Text("Current Notes", style="headlineSmall"),
+        note_cards])
     #return ft.Text("This is a debug section.")
