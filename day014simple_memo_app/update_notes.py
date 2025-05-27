@@ -1,6 +1,7 @@
 #update_notes.py
 ### === Imports ===
 import flet as ft
+from save_notebook import save_notebook
 
 ### === Functions ===
 def update_notes(page:ft.Page, my_notebook, display_column):
@@ -21,6 +22,22 @@ def update_notes(page:ft.Page, my_notebook, display_column):
             )
         )
         note_cards.controls.append(card)
+
+    #Cardsのリフレッシュ
+    def refresh_note_cards():
+        note_cards.controls.clear()
+        for idx, note in enumerate(my_notebook):
+            card = ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"{idx + 1}. {note['title']}", weight="bold"),
+                        ft.Text(note['body'])
+                    ]),
+                    padding=10,
+                )
+            )
+            note_cards.controls.append(card)
+        page.update()
 
     def load_note(e):
         try:
@@ -45,6 +62,7 @@ def update_notes(page:ft.Page, my_notebook, display_column):
                 "body": content_field.value
             }
             save_notebook(my_notebook)
+            refresh_note_cards()
             page.snack_bar = ft.SnackBar(ft.Text("Note updated successfully!"))
             page.snack_bar.open = True
             page.update()

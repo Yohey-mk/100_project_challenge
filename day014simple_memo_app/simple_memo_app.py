@@ -38,23 +38,31 @@ def main(page: ft.Page):
     def call_update_page(e):
         page.controls.clear()
         update_ui = update_notes(page, my_notebook, display_column)
-        page.add(update_ui)
+        page.add(update_ui, home_button_ui)
         page.update()
 
-    def home_button(page: ft.Page):#button -> on_click -> show all ui (again)という構造にすれば、擬似的にホーム回帰を再現可能？
-        page.add()
+    def home_button(e):#button -> on_click -> show all ui (again)という構造にすれば、擬似的にホーム回帰を再現可能？
+        page.controls.clear()
+        page.add(
+            create_note_ui,
+            update_notes_ui,
+            show_notes_ui,
+            home_button_ui
+        )
         page.update()
 
 ### === UI Components ===
     create_note_ui = user_note_input(on_submit_handler)
     update_notes_ui = ft.ElevatedButton(text="Update", on_click=call_update_page)
     show_notes_ui = show_all_notes(page, my_notebook, display_column)
+    home_button_ui = ft.ElevatedButton(text="HOME",on_click=home_button)
 
 ### === UI Interface ===
     page.add(
         create_note_ui,
         update_notes_ui,
         show_notes_ui,
+        home_button_ui,
     )
 
 ### === Run App ===
@@ -68,6 +76,9 @@ ft.app(target=main)
 
 #notes
 #✨️✨️✨️Always on top機能を実装してみる？今後の練習として！✨️✨️✨️
+#5.27 Update自体はOK,Update→Updateした情報で画面の更新＆ホームボタンの設置でホーム画面に戻れるように設計
+#Next Step -> Delete機能の追加、基本的な構造はUpdate_notesを参考にすればできそう？Card表示とか。Delete機能が完成したら、Day14は一旦完成！
+#
 #⸻
 #
 #⭐ GUIで追加する機能の例（Fletで挑戦）
