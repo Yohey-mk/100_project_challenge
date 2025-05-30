@@ -41,11 +41,18 @@ def main(page: ft.Page):
         page.add(update_ui, home_button_ui)
         page.update()
 
+    def call_delete_page(e):
+        page.controls.clear()
+        delete_ui = delete_notes(page, my_notebook, display_column)
+        page.add(delete_ui, home_button_ui)
+        page.update()
+
     def home_button(e):#button -> on_click -> show all ui (again)という構造にすれば、擬似的にホーム回帰を再現可能？
         page.controls.clear()
         page.add(
             create_note_ui,
             update_notes_ui,
+            delete_notes_ui,
             show_notes_ui,
             home_button_ui
         )
@@ -56,12 +63,14 @@ def main(page: ft.Page):
     update_notes_ui = ft.ElevatedButton(text="Update", on_click=call_update_page)
     show_notes_ui = show_all_notes(page, my_notebook, display_column)
     home_button_ui = ft.ElevatedButton(text="HOME",on_click=home_button)
+    delete_notes_ui = ft.ElevatedButton(text="Delete Notes", on_click=call_delete_page)
 
 ### === UI Interface ===
     page.add(
         create_note_ui,
         update_notes_ui,
         show_notes_ui,
+        delete_notes_ui,
         home_button_ui,
     )
 
