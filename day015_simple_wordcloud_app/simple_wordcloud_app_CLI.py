@@ -9,26 +9,40 @@ import matplotlib.pyplot as plt
 
 
 ### === Helper Functions ===
+# Load Stopwords
+def load_stopwords(csv_file="stopwords.csv"):
+    try:
+        df = pd.read_csv(csv_file)
+        stopwords = df["stopwords"].dropna().tolist() #stopwordsのところにヘッダーをいれる
+        return stopwords
+    except FileNotFoundError:
+        print("No stopwords.csv. Will skip.")
+        return []
+
 # CSV Reader
 def csv_reader():
     try:
         set_csv_file = input("Enter the csv file name: ")
         df = pd.read_csv(f"{set_csv_file}.csv")
-        text_column = df["Title"].dropna().tolist() # ""内に、タイトル名をいれるEx. Title, Content, etc
+        text_column = df["Content"].dropna().tolist() # ""内に、タイトル名をいれるEx. Title, Content, etc
         return text_column
     except FileNotFoundError:
         return "No such file exist."
 
 # 形態素解析
-def text_analyzer(text_column):
+def text_analyzer(text_column, stopwords=None):
+    if stopwords is None:
+        stopwords = []
+
     t = Tokenizer()
     words = []
     for sentence in text_column:
         tokens = t.tokenize(sentence)
         for token in tokens:
+            word = token.surface
             part_of_speech = token.part_of_speech.split(',')[0]
-            if part_of_speech == '名詞':
-                words.append(token.surface)
+            if part_of_speech == '名詞' and word not in stopwords:
+                words.append(word)
     return words
 
 # WordCloud Generator
@@ -47,7 +61,8 @@ def gen_wordcloud(words):
 ### === App Logics ===
 def main():
     data = csv_reader()
-    analyzed_text_data = text_analyzer(data)
+    stopwords = load_stopwords("stopwords.csv")
+    analyzed_text_data = text_analyzer(data, stopwords)
     gen_wordcloud(analyzed_text_data)
 
 ### === Run App ===
