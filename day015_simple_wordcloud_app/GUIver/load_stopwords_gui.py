@@ -5,41 +5,28 @@ import pandas as pd
 import flet as ft
 
 
-# CSV Handlers
-def csv_handler(e):
-    def open_handler(e):
-        file_picker.pick_files(allow_multiple=False)
+# 読み込んだテキストデータを保持するためのグローバル変数
+csv_text_data = []
 
+# CSV Handlers
+def setup_csv_loader(page, e):
     def file_handler(e: ft.FilePickerResultEvent):
         if e.files:
             csv_path = e.files[0].path
-        
+            try:
+                df = pd.read_csv(csv_path)
+                content = df["Content"].dropna().tolist()
+                csv_text_data.clear()
+                csv_text_data.extend(content)
+                print("CSV loaded:", content)
+            except Exception as err:
+                print("Failed to load CSV. Error: ", err)
 
-
-# Buttons
-    open_button = ft.ElevatedButton(label="OPEN", on_click=open_handler)
     file_picker = ft.FilePicker(on_result=file_handler)
     page.overlay.append(file_picker)
 
+    open_button = ft.ElevatedButton(text="OPEN CSV", on_click=lambda e: file_picker.pick_files(allow_multiple=False))
 
-def load_stopwords(csv_file="stopwords.csv"):
-    try:
-        df = pd.read_csv(csv_file)
-        stopwords = df["stopwords"].dropna().tolist()
-        return stopwords
-    except FileNotFoundError:
-        print("No such file exists.")
-        return []
-    
+    return open_button
 
-def csv_reader():
-    try:
-        set_csv_file = input("enter the file name")
-        df = pd.read_csv(f"{set_csv_file}.csv")
-        text_column = df["Content"].dropna().tolist()
-        return text_column
-    except FileNotFoundError:
-        return print("Couldn't read the csv file.")
-    
-
-# UI
+# CSV Handle (to load stopwords) -> load_stopwordsは別にモジュールとして作る

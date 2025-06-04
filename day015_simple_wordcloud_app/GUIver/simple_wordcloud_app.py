@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import flet as ft
 
 ### === Helper Functions ===
-
+from load_stopwords_gui import setup_csv_loader
 
 ### === App Logics ===
 def main(page: ft.Page):
