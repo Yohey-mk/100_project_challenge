@@ -1,32 +1,29 @@
 # load_stopwords_gui.py
 
-# === Imports ===
+### === Imports ===
 import pandas as pd
 import flet as ft
 
 
-# 読み込んだテキストデータを保持するためのグローバル変数
-csv_text_data = []
+csv_stopwords_gui = []
 
-# CSV Handlers
-def setup_csv_loader(page, e):
+# Stopwords Handler
+def setup_stopwords(page):
     def file_handler(e: ft.FilePickerResultEvent):
         if e.files:
             csv_path = e.files[0].path
             try:
                 df = pd.read_csv(csv_path)
-                content = df["Content"].dropna().tolist()
-                csv_text_data.clear()
-                csv_text_data.extend(content)
-                print("CSV loaded:", content)
+                content = df["Stopwords"].dropna().tolist()
+                csv_stopwords_gui.clear()
+                csv_stopwords_gui.extend(content)
+                print("csv loaded", content)
             except Exception as err:
-                print("Failed to load CSV. Error: ", err)
+                print("load failed. Error:", err)
 
     file_picker = ft.FilePicker(on_result=file_handler)
     page.overlay.append(file_picker)
 
-    open_button = ft.ElevatedButton(text="OPEN CSV", on_click=lambda e: file_picker.pick_files(allow_multiple=False))
+    open_stopwords_button = ft.ElevatedButton(text="Set stopwords", on_click=lambda e:file_picker.pick_files(allow_multiple=False))
 
-    return open_button
-
-# CSV Handle (to load stopwords) -> load_stopwordsは別にモジュールとして作る
+    return open_stopwords_button
