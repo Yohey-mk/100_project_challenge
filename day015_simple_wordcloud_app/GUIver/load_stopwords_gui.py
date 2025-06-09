@@ -14,16 +14,19 @@ def setup_stopwords(page):
             csv_path = e.files[0].path
             try:
                 df = pd.read_csv(csv_path)
-                content = df["Stopwords"].dropna().tolist()
+                content = df["stopwords"].dropna().tolist()
                 csv_stopwords_gui.clear()
                 csv_stopwords_gui.extend(content)
-                print("csv loaded", content)
+                print(f"Stopwords csv loaded.{len(content)} stopwords found.")
+                load_result.value = f"Stopwords CSV loaded. {len(content)} stopwords found."
+                page.update()
             except Exception as err:
                 print("load failed. Error:", err)
-
+    load_result = ft.Text("")
     file_picker = ft.FilePicker(on_result=file_handler)
     page.overlay.append(file_picker)
 
-    open_stopwords_button = ft.ElevatedButton(text="Set stopwords", on_click=lambda e:file_picker.pick_files(allow_multiple=False))
+    open_stopwords_button = ft.Row(controls=[ft.ElevatedButton(text="Set stopwords", on_click=lambda e:file_picker.pick_files(allow_multiple=False)),
+                                      load_result])
 
     return open_stopwords_button
