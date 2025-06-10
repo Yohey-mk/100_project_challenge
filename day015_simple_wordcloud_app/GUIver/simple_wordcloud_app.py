@@ -7,13 +7,9 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import flet as ft
 
-from load_csv_gui import setup_csv_loader, csv_text_data
-from load_stopwords_gui import setup_stopwords, csv_stopwords_gui
-from text_analyzer_gui import text_analyzer_gui
+from load_csv_gui import setup_csv_loader
+from load_stopwords_gui import setup_stopwords
 from gen_wordcloud import gen_wordcloud
-
-### === Helper Functions ===
-#tokens = text_analyzer_gui(csv_text_data, csv_stopwords_gui)
 
 ### === App Logics ===
 def main_app(page: ft.Page):
