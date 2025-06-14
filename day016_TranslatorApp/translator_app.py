@@ -5,8 +5,6 @@
 from argostranslate import translate
 import sentencepiece as spm
 
-### === Helper Functions ===
-
 ### === App Logics ===
 def main():
     installed_languages = translate.get_installed_languages()

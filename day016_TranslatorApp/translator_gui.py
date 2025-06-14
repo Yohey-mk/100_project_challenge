@@ -3,18 +3,14 @@
 ### === Imports ===
 import flet as ft
 from argostranslate import translate
-
-
-### === Helper Functions ===
-
+from translation_handler import translation_handler_ui
 
 ### === App Logics ===
-
-
-### === UI Components ===
-
+def main(page: ft.Page):
+    page.title = "Simple EN -> JP Translator"
 
 ### === UI Interfaces ===
-
+    page.add(translation_handler_ui())
 
 ### === Run App ===
+ft.app(target=main)
