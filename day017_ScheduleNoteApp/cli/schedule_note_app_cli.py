@@ -5,6 +5,7 @@
 import json
 import os
 import sys
+from datetime import datetime
 
 
 ### === Helper Functions ===
@@ -49,6 +50,25 @@ def show_all_notes(notebook):
             print((f"{note['detail']}"))
         print()
 
+# Date input validation
+def date_input_validation(date_str):
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+    
+# Get valid date
+def get_valid_date():
+    while True:
+        date_input = input("Enter a date(yyyy-mm-dd) *enter q to quit: ")
+        if date_input.lower() == "q":
+            return None
+        elif date_input_validation(date_input):
+            return date_input
+        else:
+            print("Invalid date format. Please use YYYY-MM-DD.")
+
 # Search a specific date
 def search_by_date(notebook):
     pass
@@ -67,7 +87,9 @@ def main():
 
     # if分岐
         if user_choice == "1": # Must have: date, time(optional), title, details(optional)
-            date_input = input("Enter a date(yyyy-mm-dd): ")
+            date_input = get_valid_date()
+            if date_input is None:
+                continue
             title_input = input("Enter a title: ")
             time_input = input("Enter a time if applicable (n to skip): ")
             if time_input == "n":
