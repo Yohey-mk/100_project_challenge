@@ -70,8 +70,20 @@ def get_valid_date():
             print("Invalid date format. Please use YYYY-MM-DD.")
 
 # Search a specific date
-def search_by_date(notebook):
-    pass
+def search_by_date(notebook, date_input):
+    if not notebook:
+        print("No notebook found.")
+        return
+    
+    found_notes = [note for note in notebook if note["date"] == date_input]
+
+    if not found_notes:
+        print("No notes found for that date.\n")
+    else:
+        print(f"\nNotes for {date_input}:")
+        for i, note in enumerate(found_notes, start=1):
+            print(f"{i}. {note['date']} - {note.get('time', '')}")
+            print(f"    Title: {note['title']}\n")
 
 # Edit notes from the notebook
 def edit_notes(notebook):
@@ -107,7 +119,10 @@ def main():
         elif user_choice == "3": # Show date, time, title, details
             show_all_notes(notebook)
         elif user_choice =="4":
-            search_by_date(notebook)
+            date_input = get_valid_date()
+            if date_input is None:
+                continue
+            search_by_date(notebook, date_input)
         elif user_choice == "5":
             edit_notes(notebook)
         elif user_choice == "6":
