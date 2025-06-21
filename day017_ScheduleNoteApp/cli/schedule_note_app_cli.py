@@ -86,8 +86,60 @@ def search_by_date(notebook, date_input):
             print(f"    Title: {note['title']}\n")
 
 # Edit notes from the notebook
+
 def edit_notes(notebook):
-    pass
+    if not notebook:
+        print("No notebook found.")
+        return
+    
+    # Select date to edit
+    date_to_edit = input("Enter a date to edit(YYYY-MM-DD): ")
+    found_notes = [note for note in notebook if note["date"] == date_to_edit]
+
+    if not found_notes:
+        print("No notes found for that date.\n")
+    else:
+        # Let the user to choose edit / delete
+        user_choice = input("Enter 'E' to edit, 'D' to delete note: ")
+
+        if user_choice.upper() == "E":
+            for i, note in enumerate(found_notes, start=1):
+                print(f"{i}. {note['title']}")
+            notes_to_edit = input("Which one to edit? Enter q to quit: ")
+            if notes_to_edit.lower() == "q":
+                print("Canceled.\n")
+                return
+            elif notes_to_edit.isdigit():
+                number_to_edit = int(notes_to_edit) - 1
+                if 0 <= number_to_edit < len(found_notes):
+                    current_note = found_notes[number_to_edit]
+                    print(current_note) # 選んだ番号のノートを表示できている = ここまでちゃんと動作している。
+                    new_date = input("Enter a new date(YYYY-MM-DD): ")
+                    new_title = input("Enter a new title: ")
+                    new_detail = input("Enter a new content: ")
+                    if new_date:
+                        current_note['date'] = new_date
+                    if new_title:
+                        current_note['title'] = new_title
+                    if new_detail:
+                        current_note['detail'] = new_detail
+                    print("Notes updated!\n")
+                else:
+                    print("Invalid note number")
+
+        elif user_choice.upper() == "D":
+            for i, note in enumerate(found_notes, start=1):
+                print(f"{i}. {note['title']}")
+            notes_to_edit = input("Which one to delete? Enter q to quit: ")
+            if notes_to_edit.lower() == "q":
+                print("Canceled.\n")
+                return
+            elif notes_to_edit.isdigit():
+                number_to_delete = int(notes_to_edit) - 1
+                if 0 <= number_to_delete < len(found_notes):
+                    note_to_delete = found_notes[number_to_delete]
+                    notebook.remove(note_to_delete)
+                    print(f"You have deleted {note_to_delete["title"]}\n")
 
 ### === App Logics ===
 def main():
@@ -125,10 +177,11 @@ def main():
             search_by_date(notebook, date_input)
         elif user_choice == "5":
             edit_notes(notebook)
+            save_notebook(notebook)
         elif user_choice == "6":
             exit()
         else:
-            print("Invalid input. Please select 1, 2, 3, or 4.\n")
+            print("Invalid input. Please select 1 - 6.\n")
 
 ### === Run App ===
 if __name__ == "__main__":

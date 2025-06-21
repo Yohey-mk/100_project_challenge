@@ -6,10 +6,10 @@
     "detail": "Success??"
   },
   {
-    "date": "1991-03-27",
-    "title": "Birth",
+    "date": "2020-01-01",
+    "title": "New Year",
     "time": "8am",
-    "detail": "I was given birth"
+    "detail": "Happy New Year!"
   },
   {
     "date": "2025-06-19",
@@ -18,27 +18,9 @@
     "detail": "I will take a half day off."
   },
   {
-    "date": "1234-09-12",
-    "title": "test",
+    "date": "2025-06-21",
+    "title": "Went to Yodobashi",
     "time": "",
-    "detail": ""
-  },
-  {
-    "date": "q",
-    "title": "quit the program",
-    "time": "",
-    "detail": ""
-  },
-  {
-    "date": "q",
-    "title": "",
-    "time": "",
-    "detail": ""
-  },
-  {
-    "date": "q",
-    "title": "no",
-    "time": "",
-    "detail": ""
+    "detail": "Checked camera bags in person"
   }
 ]
