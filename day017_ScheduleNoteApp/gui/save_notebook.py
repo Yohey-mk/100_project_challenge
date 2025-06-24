@@ -7,7 +7,7 @@ import sys
 def resource_path(filename):
     if hasattr(sys, "_MEIPASS"):
         return os.path.join(sys.MEIPASS, filename)
-    return os.path.join(os.path.abspath(".", filename))
+    return os.path.abspath(os.path.join(".", filename))
 
 def save_notebook(notebook, filename="day17_schedule_gui.json"):
     path = resource_path(filename)

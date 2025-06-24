@@ -2,8 +2,9 @@
 
 ### === Imports ===
 import flet as ft
+import os
 
-from save_notebook import save_notebook
+from save_notebook import save_notebook, load_notebook
 from add_schedule import add_schedule
 ### === Helper Functions ===
 
@@ -11,7 +12,15 @@ from add_schedule import add_schedule
 ### === App Logics ===
 def main(page: ft.Page):
     page.title = "Schedule Note App"
+
+    my_schedule = load_notebook()
+
 #最初にsave_shedule()を作成する。※裏側でworkするモジュール。
+    def on_submit_handler(schedule):
+        my_schedule.append(schedule)
+        save_notebook(my_schedule)
+        page.snack_bar = ft.SnackBar(ft.Text("Schedule added!"))
+        page.update()
     def call_add_schedule(e):
         page.controls.clear()
 
@@ -25,18 +34,22 @@ def main(page: ft.Page):
         pass
 
     def quit_app(e):
-        pass
+        os._exit(0)
 
 ### === UI Components ===
-
+    add_schedule_ui = add_schedule(on_submit_handler)
+    show_schedule_ui = ft.ElevatedButton("Show Schedule", on_click=call_show_schedule)
+    show_details_ui = ft.ElevatedButton("Show Details", on_click=call_show_all_notes)
+    edit_schedule_ui = ft.ElevatedButton("Edit Schedule", on_click=call_edit_schedule)
+    quit_app_ui = ft.ElevatedButton("Quit App", on_click=quit_app)
 
 ### === UI Interfaces ===
     page.add(
-        ft.ElevatedButton("Add Schedule", on_click=add_schedule),
-        ft.ElevatedButton("Show Schedule", on_click=call_show_schedule),
-        ft.ElevatedButton("Show Details", on_click=call_show_all_notes),
-        ft.ElevatedButton("Edit Schedule", on_click=call_edit_schedule),
-        ft.ElevatedButton("Quit App", on_click=quit_app)
+        add_schedule_ui,
+        show_schedule_ui,
+        show_details_ui,
+        edit_schedule_ui,
+        quit_app_ui
     )
 
 ### === Run App ===
