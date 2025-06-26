@@ -23,6 +23,8 @@ def main(page: ft.Page):
         page.update()
     def call_add_schedule(e):
         page.controls.clear()
+        page.controls.append(add_schedule(on_submit_handler))
+        page.update()
 
     def call_show_schedule(e):
         pass
@@ -37,7 +39,7 @@ def main(page: ft.Page):
         os._exit(0)
 
 ### === UI Components ===
-    add_schedule_ui = add_schedule(on_submit_handler)
+    call_add_schedule_ui = ft.ElevatedButton("Add Schedule", on_click=call_add_schedule)
     show_schedule_ui = ft.ElevatedButton("Show Schedule", on_click=call_show_schedule)
     show_details_ui = ft.ElevatedButton("Show Details", on_click=call_show_all_notes)
     edit_schedule_ui = ft.ElevatedButton("Edit Schedule", on_click=call_edit_schedule)
@@ -45,7 +47,7 @@ def main(page: ft.Page):
 
 ### === UI Interfaces ===
     page.add(
-        add_schedule_ui,
+        call_add_schedule_ui,
         show_schedule_ui,
         show_details_ui,
         edit_schedule_ui,
