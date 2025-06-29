@@ -1,14 +1,20 @@
 [
   {
-    "date": "2025-06-27",
-    "time": "7:10",
-    "title": "GUI First Test",
-    "detail": "Going to eat naan"
+    "date": "2025-06-28",
+    "time": "7:11",
+    "title": "GUI First Test(Second run on 6.28)",
+    "detail": "Going to eat naan -> Had naan!"
   },
   {
     "date": "2025-06-28",
     "time": "",
     "title": "Start shooting videos",
     "detail": "for Youtube"
+  },
+  {
+    "date": "2025-06-29",
+    "time": "",
+    "title": "Go grocery store",
+    "detail": "buy foods"
   }
 ]
