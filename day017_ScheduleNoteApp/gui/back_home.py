@@ -5,12 +5,12 @@ from add_schedule import add_schedule
 from edit_schedule import edit_schedule
 from show_all_notes import show_all_notes
 from show_schedule import show_schedule
-from save_notebook import load_notebook
+#from save_notebook import load_notebook
 
-def back_home(page: ft.Page, on_submit_handler):
+def back_home(page: ft.Page, my_schedule: list, on_submit_handler):
     page.controls.clear()
-    my_schedule = load_notebook()
-    home_button = ft.ElevatedButton("HOME", on_click=lambda e: back_home(page, on_submit_handler))
+    #my_schedule = load_notebook()
+    home_button = ft.ElevatedButton("HOME", on_click=lambda e: back_home(page, my_schedule, on_submit_handler))
     page.scroll = "auto"
 
     def call_add_schedule(e):
