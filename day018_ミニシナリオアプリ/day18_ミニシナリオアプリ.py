@@ -23,26 +23,36 @@ running = True
 scene_list = scenes
 current_scene = "intro"
 
+def load_image(path):
+    return pygame.image.load(path).convert()
+
 while running:
     screen.fill(BLACK)
 
     scene_data = scenes[current_scene]
+    image_path = scene_data.get("image")
+    if image_path:
+        bg_image = load_image(image_path)
+        screen.blit(bg_image, (0, 0))
+
     text = font.render(scene_data["text"], True, WHITE)
     screen.blit(text, (50, 50))
 
-    for i, choice in enumerate(scene_data["choices"]):
-        option_text = f"{i + 1}. {choice['label']}"
-        text_surface = font.render(option_text, True, WHITE)
-        screen.blit(text_surface, (50, 100 + i * 30))
+    # 選択肢があるかどうかチェック
+    if scene_data["choices"]:
+        for i, choice in enumerate(scene_data["choices"]):
+            option_text = f"{i + 1}. {choice['label']}"
+            text_surface = font.render(option_text, True, WHITE)
+            screen.blit(text_surface, (50, 100 + i * 30))
+    else:
+        end_text = "ここまで遊んでいただき、ありがとうございました。"
+        end_text_surface = font.render(end_text, True, WHITE)
+        screen.blit(end_text_surface, (50, 300))
 
+    # イベント処理
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        
-        elif scene_data["choices"] == "":
-            end_text = "物語はここで終了です。ESCで終了します。"
-            end_text_surface = font.render(end_text, True, WHITE)
-            screen.blit(end_text_surface, (50, 300))
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -52,6 +62,7 @@ while running:
                 index = event.key - pygame.K_1
                 if index < len(scene_data["choices"]):
                     current_scene = scene_data["choices"][index]["next"]
+
 
 
     pygame.display.flip()
