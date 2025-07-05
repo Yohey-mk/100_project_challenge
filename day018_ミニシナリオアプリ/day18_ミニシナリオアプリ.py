@@ -3,9 +3,13 @@
 ### === Imports ===
 import pygame
 import sys
-from scenes import scenes
+#from scenes import scenes
+import json
 
 ### === Helper Functions ===
+with open("scenes.json", "r", encoding="utf-8") as f:
+    scenes = json.load(f)
+
 pygame.init()
 
 WIDTH, HEIGHT = 640, 480
@@ -24,7 +28,8 @@ scene_list = scenes
 current_scene = "intro"
 
 def load_image(path):
-    return pygame.image.load(path).convert()
+    image = pygame.image.load(path).convert()
+    return pygame.transform.scale(image, (WIDTH, HEIGHT))
 
 while running:
     screen.fill(BLACK)
@@ -35,6 +40,10 @@ while running:
         bg_image = load_image(image_path)
         screen.blit(bg_image, (0, 0))
 
+    text_bg = pygame.Surface((WIDTH, 50))
+    text_bg.set_alpha(180)
+    text_bg.fill(BLACK)
+    screen.blit(text_bg, (0, 40))
     text = font.render(scene_data["text"], True, WHITE)
     screen.blit(text, (50, 50))
 
@@ -45,6 +54,10 @@ while running:
             text_surface = font.render(option_text, True, WHITE)
             screen.blit(text_surface, (50, 100 + i * 30))
     else:
+        text_bg = pygame.Surface((WIDTH, 50))
+        text_bg.set_alpha(180)
+        text_bg.fill(BLACK)
+        screen.blit(text_bg, (0, 285))
         end_text = "ここまで遊んでいただき、ありがとうございました。"
         end_text_surface = font.render(end_text, True, WHITE)
         screen.blit(end_text_surface, (50, 300))

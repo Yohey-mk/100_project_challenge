@@ -1,6 +1,4 @@
-# scenes.py
-
-scenes = {
+ {
     "intro": {
         "text": "あなたは森の中にいます。どうしますか？",
         "image": "forest.png",
@@ -63,5 +61,5 @@ scenes = {
         "text": "物語はここで幕を閉じる。ESCを押して終了してください。",
         "image": "ending.jpg",
         "choices": []
-    },
+    }
 }
