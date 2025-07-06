@@ -164,7 +164,7 @@ def play_mode():
     while True:
         game_mode = input("Which mode to play? Select 1 - 3.\n1. Study new words\n2. Review words\n3. Quit game\nYour option: ")
         if game_mode == "1":
-            show_card(cards)
+            show_card_normal(cards)
         elif game_mode == "2":
             review_mode(skipped_cards)
         elif game_mode == "3":
