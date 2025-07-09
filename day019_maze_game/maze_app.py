@@ -3,6 +3,7 @@
 ### === Imports ===
 import pygame
 from maze_map import maze
+from show_goal_message import show_goal_message
 
 
 ### === Helper Functions ===
@@ -63,6 +64,24 @@ while running:
     pygame.draw.rect(screen, (0, 255, 0), (px * TILE_SIZE, py * TILE_SIZE, TILE_SIZE, TILE_SIZE))
     gx, gy = goal
     pygame.draw.rect(screen, (0, 0, 255), (gx * TILE_SIZE, gy * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+
+    if player_position == goal:
+        show_goal_message(font, screen, WHITE, WIDTH, HEIGHT)
+        running = False
+        #msg_surface = font.render("Congratulations!", True, (255,255,255))
+        #msg_rect = msg_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        #screen.blit(msg_surface, msg_rect)
+        #pygame.display.flip()
+        #pygame.time.delay(3000)
+        #waiting = True
+        #while waiting:
+        #    for event in pygame.event.get():
+        #        if event.type == pygame.QUIT:
+        #            waiting = False
+        #            running = False
+        #        elif event.type == pygame.KEYDOWN:
+        #            waiting = False
+        #            running = False
 
     pygame.display.flip()
 
