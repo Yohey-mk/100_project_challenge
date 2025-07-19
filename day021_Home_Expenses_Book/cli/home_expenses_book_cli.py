@@ -8,44 +8,15 @@ import os
 
 from add_expenses import add_expenses
 from show_list import show_list
+from edit_utils import edit_list
+from utils import load_csv, save_csv, get_valid_date
 
 ### === Helper Sub-Functions ===
-# handle_csvみたいなモジュール化してそこにまとめてもいいかも
-def resource_path(filename):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys.MEIPASS, filename)
-
-def load_csv(filename="day21_CLI.csv"):
-    try:
-        return pd.read_csv(filename)
-    except FileNotFoundError:
-        return pd.DataFrame(columns=["Date", "Category", "Amount", "Memo"])
-
-def save_csv(df, filename="day21_CLI.csv"):
-    df.to_csv(filename, index=False)
-
-def get_valid_date():
-    while True:
-        print("*Press Q to quit")
-        date_str = input("Enter a date(YYYY-MM-DD): ")
-        if date_str.lower() == "q":
-            break
-        try:
-            pd.to_datetime(date_str)
-            return date_str
-        except ValueError:
-            print("Invalid Input. Please enter again.")
-        
 
 
 ### === Helper Functions ===
-def edit_expenses():
-    pass
-
 def quit_app():
     exit()
-
-
 
 ### === App Logics ===
 def main():
@@ -65,7 +36,8 @@ def main():
         elif choice == "2":
             show_list(df)
         elif choice == "3":
-            edit_expenses()
+            edit_list(df)
+            save_csv(df)
         elif choice == "4":
             save_csv(df)
             quit_app()
