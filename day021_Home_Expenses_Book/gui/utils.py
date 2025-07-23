@@ -47,10 +47,13 @@ def on_save_clicked(page: ft.Page):
         page.update()
 
     def refresh_page():
+        page.controls.clear()
+        on_save_clicked(page)
         date_input.value = ""
         category_input.value = ""
         amount_input.value = ""
         memo_input.value = ""
+        page.update()
 
     save_button = ft.ElevatedButton(text="Save", on_click=on_submit)
 
