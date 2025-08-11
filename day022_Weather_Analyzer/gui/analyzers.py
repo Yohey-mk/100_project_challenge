@@ -79,5 +79,5 @@ def filter_date(df):
         ax.set_ylabel("Min Temp")
         ax.set_title("Monthly Lowest Temperature")
         plt.xticks(rotation=90)
-        #plt.tight_layout()
+        plt.tight_layout()
         st.pyplot(fig)

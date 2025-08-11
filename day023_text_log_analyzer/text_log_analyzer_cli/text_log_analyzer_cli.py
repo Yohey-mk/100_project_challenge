@@ -2,7 +2,8 @@
 
 ### === Imports ===
 import argparse
-from collections import defaultdict, Counter
+from collections import Counter
+import csv
 
 ### === Helper Function ===
 
@@ -37,11 +38,18 @@ def show_ranking(counter, top_n=None):
     for i, (user, count) in enumerate(counter.most_common(top_n), 1):
         print(f"{i}: {user} - {count}回")
 
+### === CSVで保存
+def save_as_csv(user_message_counts):
+    with open('output.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['username', 'message_count'])
+        for username, count in user_message_counts.items():
+            writer.writerow([username, count])
+
 
 def main():
     print("\n=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n")
-    print("How to use: python module_name.py --x XXXX")
-    print("EX: python text_log_analyzer_cli.py --user Alice")
+    # How to use EX: python text_log_analyzer_cli.py --user Alice
     parser = argparse.ArgumentParser(description="Log Analyzer")
     parser.add_argument("--user", help="指定ユーザの発言だけ表示")
     parser.add_argument("--rank", action="store_true", help="ユーザごとの発言数ランク")
@@ -55,6 +63,7 @@ def main():
         log_lines = get_log_lines()
         counter = count_user_msg(log_lines)
         show_ranking(counter, top_n=args.top)
+        save_as_csv(counter)
 
     if not args.user and not args.rank:
         parser.print_help() #ここでusageを表示している？
