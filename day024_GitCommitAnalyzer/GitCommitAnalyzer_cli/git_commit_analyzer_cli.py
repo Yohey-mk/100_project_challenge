@@ -8,7 +8,9 @@ import pandas as pd
 from pandas.api.types import CategoricalDtype
 
 ### === Functions ===
-def get_git_log(command=["git", "log", "--pretty=format:'%h|%an|%ad|%s'", "--date=iso"]):
+def get_git_log(command=None):
+    if command is None:
+        command = ["git", "log", "--pretty=format:'%h|%an|%ad|%s'", "--date=iso"]
     try:
         result = subprocess.run(
             command, #"--oneline", "log -> status"などで取得内容を変更する
@@ -37,9 +39,8 @@ def get_git_log(command=["git", "log", "--pretty=format:'%h|%an|%ad|%s'", "--dat
 ### 分析処理
 # コミッター別
 def filter_by_committer(df):
-    print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by commiter")
     filtered_by_committer = df.groupby(df['author']).size().sort_values(ascending=False)
-    print(filtered_by_committer)
+    return filtered_by_committer
 
 # ランキング用
 def filter_by_user(df):
@@ -49,45 +50,59 @@ def filter_by_user(df):
     return counter
 
 def show_ranking(counter, top_n=None):
-    print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nRanking")
+    lines = []
     for i, (username, count) in enumerate(counter.most_common(top_n), 1):
-        print(f"{i}: {username} - {count}")
+        lines.append(f"{i}: {username} - {count}")
+        return "\n".join(lines)
 
 # 曜日別集計
 def filter_by_weekdays(df):
+    df_copy = df.copy()
     weekday_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     cat_type = CategoricalDtype(categories=weekday_order, ordered=True)
-    df['weekday'] = df['date'].dt.day_name().astype(cat_type)
-    print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by date name")
-    #filtered_by_date = df.groupby(df['date'].dt.day_name()).size().sort_values(ascending=False)
-    filtered_by_date = df.groupby('weekday').size().sort_index()
-    print(filtered_by_date)
+    df_copy['weekday'] = df_copy['date'].dt.day_name().astype(cat_type)
+    filtered_by_date = df_copy.groupby('weekday').size().sort_index()
+    return filtered_by_date
 
 # 時間帯別集計
 def filter_by_time(df):
-    print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by hour")
     filtered_by_time = df.groupby(df['date'].dt.hour).size().sort_index()
-    print(filtered_by_time)
-
+    return filtered_by_time
 
 # Outputs
 log_output = get_git_log()
 df = pd.DataFrame(log_output)
 print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nLatest Summary")
 print(df.head(10))
-# コミッター別集計
-filter_by_committer(df)
-#print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount By User")
-#count_by_user = df.groupby("author").size().sort_values(ascending=False)
-#print(count_by_user.head(10))
-# 曜日別Output
-filter_by_weekdays(df)
-# 時間帯別Output
-filter_by_time(df)
-# コミッターランキング
-filtered_count = filter_by_user(df)
-show_ranking(filtered_count, top_n=10)
-print("-------")
+# 分析オプション
+while True:
+    print('Choose your option:\n1.Filter by committer\n2.Filter by weekdays\n3.Filter by hour\n4.Show rankings\n5.Quit app')
+    try:
+        user_input = int(input('Your choice: '))
+    except ValueError:
+        print('Invalid input.')
+    # コミッター別集計
+    if user_input == 1:
+        print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by commiter")
+        print(filter_by_committer(df))
+    # 曜日別Output
+    elif user_input == 2:
+        print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by date name")
+        print(filter_by_weekdays(df))
+    # 時間帯別Output
+    elif user_input == 3:
+        print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nCount by hour")
+        print(filter_by_time(df))
+    # コミッターランキング
+    elif user_input == 4:
+        filtered_count = filter_by_user(df)
+        print("+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\nRanking")
+        print(show_ranking(filtered_count, top_n=10))
+    # Quit App
+    elif user_input == 5:
+        exit()
+    else:
+        print("Invalid input.")
 
 
 
