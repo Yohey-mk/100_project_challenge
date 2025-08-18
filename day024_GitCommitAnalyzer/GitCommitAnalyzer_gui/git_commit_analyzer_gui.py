@@ -58,8 +58,18 @@ def filter_by_time(df):
     filtered_by_time = df.groupby(df['date'].dt.hour).size().sort_index()
     return filtered_by_time
 
-def visualizer():
-    return None#pltで描画
+def visualizer(series, title, xlabel, ylabel, kind="Line"):
+    fig, ax = plt.subplots(figsize=(10, 5))
+    if kind == "bar":
+        ax.bar(series.index, series.values)
+    else:
+        ax.set_xticks(range(24))
+        ax.plot(series.index, series.values, marker="o")
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.xticks(rotation=45 if kind == "bar" else 0)
+    st.pyplot(fig)
 
 def select_command():
     option = st.selectbox(
@@ -87,13 +97,15 @@ if not df.empty:
         result = filter_by_weekdays(df)
         st.dataframe(result)
         #matplotlibで描画
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.bar(result.index, result.values)
-        ax.set_title("Commits by Weekday")
-        ax.set_xlabel("Weekday")
-        ax.set_ylabel("Number of Commits")
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+        visualizer(result, "Commits by Weekday", "Weekday", "Number of Commits", kind="bar")
+        #以下不要（学びの記録として残しておく）
+        #fig, ax = plt.subplots(figsize=(10, 5))
+        #ax.bar(result.index, result.values)
+        #ax.set_title("Commits by Weekday")
+        #ax.set_xlabel("Weekday")
+        #ax.set_ylabel("Number of Commits")
+        #plt.xticks(rotation=45)
+        #st.pyplot(fig)
     elif option == "Filter by time":
         result = filter_by_time(df)
 
@@ -104,13 +116,15 @@ if not df.empty:
         st.dataframe(result)
 
         #matplotlibで描画
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(result.index, result.values, marker="o")
-        ax.set_xticks(range(24))
-        ax.set_title("Commit Hour Trend")
-        ax.set_xlabel("Hour")
-        ax.set_ylabel("Number of commits")
-        st.pyplot(fig)
+        visualizer(result, "Commit Hour Trend", "Hour", "Number of Commits", kind="line")
+        #以下不要（学びの記録として残しておく）
+        #fig, ax = plt.subplots(figsize=(10, 5))
+        #ax.plot(result.index, result.values, marker="o")
+        #ax.set_xticks(range(24))
+        #ax.set_title("Commit Hour Trend")
+        #ax.set_xlabel("Hour")
+        #ax.set_ylabel("Number of commits")
+        #st.pyplot(fig)
     else:
         st.subheader("Unknown")
 
