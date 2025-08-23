@@ -8,8 +8,17 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import base64
 import io
+from dataclasses import dataclass
+from typing import Optional
 
 ### === Functions ===
+@dataclass(slots=True)
+class AppState:
+    df: Optional[pd.DataFrame] = None
+    model: Optional[LinearRegression] = None
+    X: Optional[np.ndarray] = None
+    y: Optional[np.ndarray] = None
+
 #モデルの作成と学習
 def train_model(X, y):
     model = LinearRegression()
@@ -33,14 +42,22 @@ def main(page: ft.Page):
     image = ft.Image(src_base64=EMPTY_IMAGE)
     input_field = ft.TextField(label="Enter study hours(comma separated)", width=300)
 
-    state = {"df": None, "model": None, "x_col": None, "y_col": None}
+    #state = {"df": None, "model": None, "x_col": None, "y_col": None}
+    state = AppState()
 
     # Dropdowns for column selection
     x_dropdown = ft.Dropdown(label="Select feature (X)", options=[], width=250)
     y_dropdown = ft.Dropdown(label="Select target (y)", options=[], width=250)
 
+    def update_plot(fig, image):
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png")
+        plt.close(fig)
+        buf.seek(0)
+        image.src_base64 = base64.b64encode(buf.read()).decode("utf-8")
+
     def train(e):
-        df = state["df"]
+        df = state.df
         if df is None:
             result_text.value = "No data loaded!"
             page.update()
@@ -61,9 +78,12 @@ def main(page: ft.Page):
             return
 
         model = train_model(X, y)
-        state["model"] = model
-        state["X"] = X
-        state["y"] = y
+        #state["model"] = model
+        #state["X"] = X
+        #state["y"] = y
+        state.X = X
+        state.y = y
+        state.model = model
 
         result_text.value = "Model trained successfully!"
         coef_text.value = f"Coefficient (slope): {model.coef_[0]:.2f}"
@@ -75,38 +95,28 @@ def main(page: ft.Page):
         ax.scatter(X, y, color="blue", label="Training Data")
         ax.plot(X, model.predict(X), color="red")
         ax.legend()
-        buf = io.BytesIO()
-        plt.savefig(buf, format="png")
-        plt.close(fig)
-        buf.seek(0)
-        image.src_base64 = base64.b64encode(buf.read()).decode("utf-8")
-
+        update_plot(fig, image)
         page.update()
 
     def predict(e):
-        model = state["model"]
-        if model is None:
+        model = state.model
+        if state.model is None:
             pred_text.value = "Train the model first!"
         else:
             try:
                 values = [float(x.strip()) for x in input_field.value.split(",")]
                 X_new = np.array(values).reshape(-1, 1)
-                y_pred = model.predict(X_new)
+                y_pred = state.model.predict(X_new)
                 pred_text.value = f"Predictions: {y_pred}"
 
                 # Re-draw with predictions included
-                X, y = state["X"], state["y"]
+                X, y = state.X, state.y
                 fig, ax = plt.subplots()
                 ax.scatter(X, y, color="blue", label="Training Data")
                 ax.plot(X, model.predict(X), color="red", label="Regression line")
                 ax.scatter(X_new, y_pred, color="green", marker="p", s=100, label="Predictions")
                 ax.legend()
-
-                buf = io.BytesIO()
-                plt.savefig(buf, format="png")
-                plt.close(fig)
-                buf.seek(0)
-                image.src_base64 = base64.b64encode(buf.read()).decode("utf-8")
+                update_plot(fig, image)
                 page.update()
             except ValueError:
                 pred_text.value = "Invalid input!"
@@ -133,7 +143,8 @@ def main(page: ft.Page):
             
             try:
                 df = pd.read_csv(f.path)
-                state["df"] = df
+                #state["df"] = df
+                state.df = df
                 setup_text.value = f"CSV Loaded: {f.name} ({len(df)}件)"
 
                 # 列名をドロップダウンに反映
