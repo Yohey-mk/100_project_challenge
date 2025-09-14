@@ -29,7 +29,7 @@ class AppState:
 @dataclass(slots=True)
 class Parameters:
     # Generate data
-    n_users = int = 1000
+    n_users: int = 1000
     lam_visits: float = 5.0
     beta0: float = -2.0
     beta1: float = 0.15 # visitsの効果
@@ -157,6 +157,49 @@ HELP_TEXT = {
         "係数が正なら、その特徴量が増えると『購入のオッズ』が上がる(=購入しやすくなる)ことを意味します。\n"
         "係数の指数 exp(beta) は『オッズ比』で、1単位増でオッズが何倍になるかを表します。"
     ),
+    "beta0_detail": (
+        """
+        •	beta0 (intercept)
+        •	全ての特徴量がゼロのときの「基準の購入しやすさ」。
+        •	値を大きくすると、全体的に購入確率が底上げされる。小さくすると全体的に購入が起きにくくなる。
+        •	意味: 市場全体の購入しやすさの基準を設定。
+        """
+    ),
+    "beta1_detail": (
+        """
+        •	beta1 (visits)
+        •	訪問回数が1回増えるごとに、購入オッズがどのくらい増えるか。
+	    •	値を大きくすると「たくさん訪問する人は買いやすい」という関係が強まる。
+	    •	小さくすると「訪問回数と購入の関係は弱い」という設定になる。
+	    •	意味: 「リピーターは買いやすい」効果の強さ。
+        """
+    ),
+    "beta2_detail": (
+        """
+        •	beta2 (is_member)
+        •	会員かどうかで購入オッズがどのくらい上がるか。
+	    •	値を大きくすると「会員は非会員より買いやすい」という差が大きくなる。
+	    •	値をゼロにすると、会員と非会員の差はなくなる。
+	    •	意味: 会員制度がどれだけ購買行動に影響するか。
+        """
+    ),
+    "beta3_detail": (
+        """
+        •	beta3 (is_repeat)
+	    •	過去に購入した人（リピーター）が再購入する確率の高さ。
+	    •	値を大きくすると「一度買った人はまた買う」効果が強調される。
+	    •	意味: ロイヤリティ（リピーター効果）の強さ。
+        """
+    ),
+    "beta4_detail": (
+        """
+        •	beta4 (price_sensitivity)
+	    •	価格に敏感なユーザーほど購入しにくい効果。
+	    •	値を大きくすると「価格に敏感な人はさらに買わない」設定になる。
+	    •	値を小さくすると「価格敏感度の影響が弱まる」。
+	    •	意味: 値引きや価格設定が購買にどのくらい影響するか。
+        """
+    ),
     "metrics": (
         "主要な評価指標\n"
         "• Accuracy: 全予測のうち正解した割合。クラス不均衡に弱い可能性があります。\n"
@@ -169,6 +212,8 @@ HELP_TEXT = {
 def main(page: ft.Page):
     page.title = "Multivariable Logistic Regression"
     page.scroll = "auto"
+    page.window.width = 1200
+    page.window.height = 800
 
     state = AppState()
     params = Parameters()
@@ -194,7 +239,43 @@ def main(page: ft.Page):
 
     # === Controls: Threshold and Info ===
     threshold_field = ft.TextField(label="Threshold (0-1)", value=str(params.threshold), width=220)
-    threshold_help = ft.Tooltip(message=HELP_TEXT["threshold"], decoration=ft.Icon(ft.Icons.INFO))
+    threshold_help = ft.ExpansionTile(title=ft.Text("❓️Thresholdの説明"),
+                                      controls=[ft.Text(HELP_TEXT["threshold"])])
+    
+    # === Explanations (Expansion tile/markdown) ===
+    metrics_help = ft.ExpansionTile(title=ft.Text("❓️Metricsの説明"),
+                                    controls=[ft.Text(HELP_TEXT["metrics"])])
+    explain_md = ft.Markdown(
+        """
+### 用語の説明
+- **Threshold**: 予測確率がこの値以上なら 1(購入) と判定。それ未満は 0(非購入)。
+- **Accuracy**: (TP+TN)/(全件)。クラス不均衡では過大評価に注意。
+- **ROC-AUC**: 0.5=ランダム, 1.0=完全。閾値に依存せずモデルの識別力を測る。
+- **Confusion Matrix**: 予測と真値のクロス表。[[TN, FP],[FN, TP]]。
+- **Beta (係数)**: 1単位増でオッズが exp(beta) 倍。符号が正なら購入しやすく、負なら購入しにくい。
+    """,
+    extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+    selectable=True,
+    )
+
+    beta_help = ft.ExpansionTile(title=ft.Text("❓️Betaの説明"),
+                                 controls=[ft.Text(HELP_TEXT["beta"])], initially_expanded=False)
+    beta0_help = ft.ExpansionTile(title=ft.Text("❓️Beta0の説明"),
+                                  controls=[ft.Text(HELP_TEXT["beta0_detail"])], initially_expanded=False)
+    beta1_help = ft.ExpansionTile(title=ft.Text("❓️Beta1の説明"), 
+                                  controls=[ft.Text(HELP_TEXT["beta1_detail"])], initially_expanded=False)
+    beta2_help = ft.ExpansionTile(title=ft.Text("❓️Beta2の説明"),
+                                  controls=[ft.Text(HELP_TEXT["beta2_detail"])], initially_expanded=False)
+    beta3_help = ft.ExpansionTile(title=ft.Text("❓️Beta3の説明"),
+                                  controls=[ft.Text(HELP_TEXT["beta3_detail"])], initially_expanded=False)
+    beta4_help = ft.ExpansionTile(title=ft.Text("❓️Beta4の説明"),
+                                  controls=[ft.Text(HELP_TEXT["beta4_detail"])], initially_expanded=False)
+    beta_details = ft.ExpansionTile(title=ft.Text("❓️Beta0 - 4の詳細"),
+        controls=[ft.Column([beta0_help,
+                              beta1_help,
+                              beta2_help,
+                              beta3_help,
+                              beta4_help])], initially_expanded=False)
 
     # === Controls: simulation params ===
     n_users_slider = ft.Slider(min=100, max=10000, divisions=99, value=params.n_users, label="{value}")
@@ -205,8 +286,6 @@ def main(page: ft.Page):
     beta2_field = ft.TextField(label="beta2 (is_member)", value=str(params.beta2), width=180)
     beta3_field = ft.TextField(label="beta3 (is_repeat)", value=str(params.beta3), width=180)
     beta4_field = ft.TextField(label="beta4 (price_sensitivity; 負の効果)", value=str(params.beta4), width=260)
-
-    beta_help = ft.Tooltip(message=HELP_TEXT["beta"], decoration=ft.Icon(ft.Icons.CANDLESTICK_CHART))
 
     # === Dropdowns ===
     x_dropdown = ft.Dropdown(label="Select feature (X)", options=[], width=250)
@@ -322,21 +401,6 @@ def main(page: ft.Page):
             return
         run_training(state.df)
 
-    # === Explanations (accordion/markdown) ===
-    metrics_help = ft.Tooltip(message=HELP_TEXT["metrics"], decoration=ft.Icon(ft.Icons.CANDLESTICK_CHART))
-    explain_md = ft.Markdown(
-        """
-### 用語の説明
-- **Threshold**: 予測確率がこの値以上なら 1(購入) と判定。それ未満は 0(非購入)。
-- **Accuracy**: (TP+TN)/(全件)。クラス不均衡では過大評価に注意。
-- **ROC-AUC**: 0.5=ランダム, 1.0=完全。閾値に依存せずモデルの識別力を測る。
-- **Confusion Matrix**: 予測と真値のクロス表。[[TN, FP],[FN, TP]]。
-- **Beta (係数)**: 1単位増でオッズが exp(beta) 倍。符号が正なら購入しやすく、負なら購入しにくい。
-    """,
-    extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
-    selectable=True,
-    )
-
     # === Layout ===
     # left: read data/simulation
     left_card = ft.Card(
@@ -349,7 +413,7 @@ def main(page: ft.Page):
                     ft.Text("Simulation Settings", weight=ft.FontWeight.BOLD),
                     ft.Column([ft.Text("n_users"), n_users_slider]),
                     ft.Column([ft.Text("lam_visits"), lam_slider]),
-                    ft.Row([beta_help, ft.Text("Beta(係数)")]),
+                    ft.Column([beta_help, ft.Text("Beta(係数)")]),
                     ft.Row([
                         ft.Container(beta0_field, padding=0),
                         ft.Container(beta1_field, padding=0)]),
@@ -357,7 +421,9 @@ def main(page: ft.Page):
                         ft.Container(beta2_field, padding=0),
                         ft.Container(beta3_field, padding=0)]),
                     ft.Container(beta4_field, padding=0),
-                    ft.Row([threshold_help, threshold_field]),
+                    ft.Column([ft.Text("💡 Beta パラメータの意味とスライダ調整の意図"),
+                               beta_details]),
+                    ft.Column([threshold_help, threshold_field]),
                     ft.Row([
                         ft.ElevatedButton("Simulate + Train", on_click=on_simulate_click),
                         ft.ElevatedButton("Train/Evaluate (CSV)", on_click=on_train_click),
@@ -376,7 +442,7 @@ def main(page: ft.Page):
         ft.Container(
             content=ft.Column([
                 ft.Text("2) 評価", size=18, weight=ft.FontWeight.BOLD),
-                ft.Row([metrics_help, ft.Text("Metrics")]),
+                ft.Column([metrics_help, ft.Text("Metrics")]),
                 acc_text,
                 auc_text,
                 cm_text,
