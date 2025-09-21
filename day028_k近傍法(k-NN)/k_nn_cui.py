@@ -101,6 +101,29 @@ def recommend_for_user_based(user_id, top_k=5):
     neigh_dists = distances_u[idx][1:]
 
     #近いユーザーの購入履歴を集める
+    candidate_items = set()
+    for ni in neigh_idxs:
+        neigh_user = user_item_matrix.index[ni]
+        items_bought = set(items_df[items_df["user_id"] == neigh_user]["item_id"].values)
+        candidate_items.update(items_bought)
+
+    #すでに対象ユーザが購入したものは除外する
+    user_items = set(items_df[items_df["user_id"] == user_id]["item_id"].values)
+    candidate_items -= user_items
+
+    #簡易スコア：近いユーザがどれだけ買っているか
+    score = {}
+    for item in candidate_items:
+        count = sum(item in set(items_df[items_df["user_id"] == user_item_matrix.index[ni]]["item_id"].values)
+                    for ni in neigh_idxs)
+        score[item] = count
+
+    #上位Top_kを返す
+    ranked = sorted(score.items(), key=lambda x: x[1], reverse=True)
+    top_items = [iid for iid, _ in ranked[:top_k]]
+    return item_master_df[item_master_df["item_id"].isin(top_items)][["item_id", "sex", "age", "type", "color"]]
+
+print("User-based Recommendation:\n", recommend_for_user_based(user_id=10, top_k=5))
 
 ### === Notes ===
 #1️⃣ アイテムベース推薦を動かす（すでにほぼ完成）
