@@ -2,6 +2,7 @@
 
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 import numpy as np
 
@@ -28,7 +29,7 @@ items_df = get_dfs()
 
 train_df, test_df = train_test_split_by_user(items_df, test_size=0.2)
 
-### === 2. trainデータでUser-Item行列を作成, 推薦関数（train用）===
+### === 2.1 trainデータでUser-Item行列を作成, 推薦関数（train用）===
 class UserBasedRecommender:
     def __init__(self, train_df, item_master_df, n_neighbors=6, metric="cosine"):
         self.train_df = train_df
@@ -66,6 +67,35 @@ class UserBasedRecommender:
         else:
             return top_items
 
+### === 2.2 Item_Based_Recommender ===
+class ItemBasedRecommender:
+    def __init__(self, item_master_df, n_neighbors=6, metric="cosine"):
+        enc = OneHotEncoder(sparse_output=False)
+        X = enc.fit_transform(item_master_df[["sex", "age", "item_id", "type", "color"]])
+        self.item_master_df = item_master_df
+        self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric).fit(X)
+        self.distances, self.indices = self.nn.kneighbors(X)
+
+    def recommend(self, user_purchased, top_k=10, with_attributes=True):
+        score = {}
+        for item_id in user_purchased:
+            idx = self.item_master_df.index[self.item_master_df["item_id"] == item_id][0]
+            neigh_idxs = self.indices[idx][1:]
+            neigh_dists = self.distances[idx][1:]
+            for ni, d in zip(neigh_idxs, neigh_dists):
+                iid = int(self.item_master_df.loc[ni, "item_id"])
+                if iid in user_purchased:
+                    continue
+                sim = 1 - d
+                score[iid] = score.get(iid, 0.0) + sim
+        ranked = sorted(score.items(), key=lambda x: x[1], reverse=True)
+        top_items = [iid for iid, _ in ranked[:top_k]]
+        if with_attributes:
+            return self.item_master_df[self.item_master_df["item_id"].isin(top_items)][
+                ["item_id", "sex", "age", "type", "color"]
+            ].reset_index(drop=True)
+        else:
+            return top_items
 
 ### === 3. Precision@k 計算 ===
 def precision_at_k(recommender, test_df, user_id, k=5):

@@ -7,7 +7,7 @@ import random
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import OneHotEncoder
 
-from train_test_split import get_dfs, train_test_split_by_user, UserBasedRecommender, precision_at_k, mean_precision_at_k
+from train_test_split import get_dfs, train_test_split_by_user, UserBasedRecommender, ItemBasedRecommender, precision_at_k, mean_precision_at_k
 
 ### === sample data creation ===
 # ---Not in use from here *Sampleデータをランダム生成するために使用した。備忘録として残している。
@@ -57,6 +57,16 @@ print(recommender.recommend(user_id=user_id, top_k=5, with_attributes=True))
 mean_p5 = mean_precision_at_k(recommender, test_df, k=5, max_users=200)
 print("Mean Precision@5:", mean_p5)
 print("---------\n")
+
+# ItemBasedRecommender呼び出し
+items_purchased = [10, 40] #Item_ids
+item_recommender = ItemBasedRecommender(item_master_df, n_neighbors=6)
+print("Item based recommendations:\n")
+print(item_recommender.recommend(user_purchased=items_purchased, top_k=5, with_attributes=True))
+print("---------\n")
+
+
+### === Item-Based Recommenderもクラスとして切り出すので、以下不要 ===
 
 ### === One-Hot Encoding(カテゴリ特徴) ===
 enc = OneHotEncoder(sparse_output=False)
