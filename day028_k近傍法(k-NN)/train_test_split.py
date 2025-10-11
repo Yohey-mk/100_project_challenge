@@ -32,9 +32,13 @@ train_df, test_df = train_test_split_by_user(items_df, test_size=0.2)
 ### === 2.1 trainデータでUser-Item行列を作成, 推薦関数（train用）===
 class UserBasedRecommender:
     def __init__(self, train_df, item_master_df, n_neighbors=6, metric="cosine"):
-        self.train_df = train_df
-        self.item_master_df = item_master_df
-        self.user_item_matrix = pd.crosstab(train_df["user_id"], train_df["item_id"])
+        self.train_df = train_df.copy()
+        self.train_df["user_id"] = self.train_df["user_id"].astype(str)
+        self.train_df["item_id"] = self.train_df["item_id"].astype(str)
+        self.item_master_df = item_master_df.copy()
+        self.item_master_df["item_id"] = self.item_master_df["item_id"].astype(str)
+
+        self.user_item_matrix = pd.crosstab(self.train_df["user_id"], self.train_df["item_id"])
         self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric).fit(self.user_item_matrix)
         self.distances, self.indices = self.nn.kneighbors(self.user_item_matrix)
 
@@ -70,28 +74,32 @@ class UserBasedRecommender:
 ### === 2.2 Item_Based_Recommender ===
 class ItemBasedRecommender:
     def __init__(self, item_master_df, n_neighbors=6, metric="cosine"):
+        self.item_master_df = item_master_df.copy()
         enc = OneHotEncoder(sparse_output=False)
-        X = enc.fit_transform(item_master_df[["sex", "age", "item_id", "type", "color"]])
-        self.item_master_df = item_master_df
+        X = enc.fit_transform(item_master_df[["sex", "age", "type", "color"]])
         self.nn = NearestNeighbors(n_neighbors=n_neighbors, metric=metric).fit(X)
         self.distances, self.indices = self.nn.kneighbors(X)
 
     def recommend(self, user_purchased, top_k=10, with_attributes=True):
         score = {}
         for item_id in user_purchased:
-            idx = self.item_master_df.index[self.item_master_df["item_id"] == item_id][0]
+            matches = self.item_master_df.index[self.item_master_df["item_id"].astype(str) == str(item_id)]
+            if len(matches) == 0:
+                continue
+            idx = matches[0]
+
             neigh_idxs = self.indices[idx][1:]
             neigh_dists = self.distances[idx][1:]
             for ni, d in zip(neigh_idxs, neigh_dists):
-                iid = int(self.item_master_df.loc[ni, "item_id"])
-                if iid in user_purchased:
+                iid = self.item_master_df.loc[ni, "item_id"]
+                if str(iid) in user_purchased:
                     continue
-                sim = 1 - d
-                score[iid] = score.get(iid, 0.0) + sim
+                sim = max(0.0, 1 - d)
+                score[str(iid)] = score.get(str(iid), 0.0) + sim
         ranked = sorted(score.items(), key=lambda x: x[1], reverse=True)
         top_items = [iid for iid, _ in ranked[:top_k]]
         if with_attributes:
-            return self.item_master_df[self.item_master_df["item_id"].isin(top_items)][
+            return self.item_master_df[self.item_master_df["item_id"].astype(str).isin(top_items)][
                 ["item_id", "sex", "age", "type", "color"]
             ].reset_index(drop=True)
         else:
