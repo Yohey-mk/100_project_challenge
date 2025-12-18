@@ -51,12 +51,12 @@ print("Random Forest Accuracy:", acc_forest)
 importances = forest.feature_importances_
 indices = np.argsort(importances[::-1])
 
-plt.figure(figsize=(10, 6))
-plt.bar(range(10), importances[indices][:10])
-plt.xticks(range(10), X.columns[indices][:10], rotation=45)
-plt.title("Top 10 Important Features")
-plt.tight_layout()
-plt.show()
+#plt.figure(figsize=(10, 6))
+#plt.bar(range(10), importances[indices][:10])
+#plt.xticks(range(10), X.columns[indices][:10], rotation=45)
+#plt.title("Top 10 Important Features")
+#plt.tight_layout()
+#plt.show()
 
 # 決定木の深さと精度の関係 *これをmatplotlibで折れ線グラフで可視化する。⭐️ToDo
 depths = range(1, 20)
@@ -68,12 +68,30 @@ for d in depths:
     pred = model.predict(X_test)
     scores.append(accuracy_score(y_test, pred))
 
-plt.figure(figsize=(8, 5))
-plt.plot(depths, scores, marker="o")
-plt.xlabel("Depth of Decision Tree")
-plt.ylabel("Accuracy")
-plt.title("Decision Tree: Depth vs Accuracy")
-plt.grid(True)
+#plt.figure(figsize=(8, 5))
+#plt.plot(depths, scores, marker="o")
+#plt.xlabel("Depth of Decision Tree")
+#plt.ylabel("Accuracy")
+#plt.title("Decision Tree: Depth vs Accuracy")
+#plt.grid(True)
+#plt.tight_layout()
+#plt.show()
+
+# Graphを１つにまとめたVersion↓
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# left: 特徴量重要度
+axes[0].bar(range(10), importances[indices][:10])
+axes[0].set_xticks(range(10))
+axes[0].set_xticklabels(X.columns[indices][:10], rotation=45, ha="right")
+
+# right: 決定木の深さと精度
+axes[1].plot(depths, scores, marker="o")
+axes[1].set_xlabel("Depth of Decision Tree")
+axes[1].set_ylabel("Accuracy")
+axes[1].set_title("Decision Tree: Depth vs Accuracy")
+axes[1].grid(True)
+
 plt.tight_layout()
 plt.show()
 
