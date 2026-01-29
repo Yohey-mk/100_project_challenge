@@ -109,3 +109,89 @@ print("SHAP values calculated successfully.")
 print(f"SHAP values shape: {shap_values_to_plot.shape}")
 print(type(shap_values))
 print(np.array(shap_values).shape)
+
+plt.figure()
+plt.title("Average Feature Importance (Mean SHAP value)")
+shap.summary_plot(shap_values_to_plot, X_test, plot_type="bar", show=False)
+plt.tight_layout()
+plt.show()
+
+# Calculate feature importance based on mean absolute SHAP values
+feature_importance = pd.DataFrame({
+    'feature': X_test.columns,
+    'importance': np.abs(shap_values_to_plot).mean(axis=0)
+}).sort_values('importance', ascending=False)
+
+print("Top 10 Most Important Features:")
+print(feature_importance.head(10))
+
+# Get top 3 features for dependence plots
+top_features = feature_importance['feature'].head(3).tolist()
+print(f"\nCreateing dependence plots for: {top_features}")
+
+# Dependence plot for the most important feature
+if len(top_features) > 0:
+    plt.figure(figsize=(8,5))
+    shap.dependence_plot(top_features[0], shap_values_to_plot, X_test, interaction_index=None, show=False)
+    plt.title(f"Risk Dependence on {top_features[0]}")
+    plt.tight_layout()
+    plt.show()
+
+# Dependence plot for the second most important feature
+if len(top_features) > 1:
+    plt.figure(figsize=(8,5))
+    shap.dependence_plot(top_features[1], shap_values_to_plot, X_test, interaction_index="auto", show=False)
+    plt.title(f"Risk Dependence on {top_features[1]}")
+    plt.tight_layout()
+    plt.show()
+
+# Dependence plot for the third most important feature
+if len(top_features) > 2:
+    plt.figure(figsize=(8,5))
+    shap.dependence_plot(top_features[2], shap_values_to_plot, X_test, interaction_index="auto", show=False)
+    plt.title(f"Risk Dependence on {top_features[2]}")
+    plt.tight_layout()
+    plt.show()
+
+# Waterfall plot for the first patient in the test set
+# 1. Base Value (基準値/平均値)の取得
+# ランダムフォレストは[Class0の平均、Class1の平均]のリストを持っているため、
+# Class 1(病気あり)の平均値だけと取り出す
+if isinstance(explainer.expected_value, list) or isinstance(explainer.expected_value, np.ndarray):
+    base_value = explainer.expected_value[1]
+else:
+    base_value = explainer.expected_value[0]
+
+# 2. Explanationオブジェクトを手動で作成
+# すでに集計済みのshap_values_to_plot(Class 1専用)を再利用。
+# これにより"Type Error"を回避
+explanation = shap.Explanation(
+    values=shap_values_to_plot,
+    base_values=base_value,
+    data=X_test.values,
+    feature_names=X_test.columns
+)
+
+# 3. 最初の患者さんのWaterfall Plotを表示
+# E[f(x)] (下部にある数値): 全患者の平均的なリスク（基準値）
+# f(x) (上部にある数値): この患者さんの最終的な予測スコア（確率）。
+print("\nGenerating Waterfall plot for the first patient")
+plt.figure()
+# explanation[0]で最初の患者さんのデータを指定
+shap.plots.waterfall(explanation[0], show=False)
+plt.tight_layout()
+# 赤色の矢印はリスクを押し上げた要因（悪い要素）、青いのは押し下げた要因（良い要素）
+plt.show()
+
+# 4. Waterfall plots for patients 2 and 3
+plt.figure()
+shap.plots.waterfall(explanation[1], show=False)
+plt.title("Prediction Explanation for patient #2")
+plt.tight_layout()
+plt.show()
+
+plt.figure()
+shap.plots.waterfall(explanation[2], show=False)
+plt.title("Prediction Explanation for patient #3")
+plt.tight_layout()
+plt.show()
