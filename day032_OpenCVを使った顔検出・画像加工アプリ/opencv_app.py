@@ -37,7 +37,20 @@ while True:
     # 6. 検出された顔の周りに四角を描く。
     # (x, y, w, h)は(左上のX座標, 左上のY座標, 幅, 高さ)
     for (x, y, w, h) in faces:
-        # cv2.rectangle(画像, 左上座標, 右下座標, 色（BGR）, 線の太さ)
+        # A. 顔の領域（ROI: Region Of Interest）を切り出す
+        face_roi = frame[y : y+h, x : x+w]
+
+        # B. モザイク処理
+        # 1. 情報を間引く（1/10に縮小）
+        small_face = cv2.resize(face_roi, None, fx=0.03, fy=0.03, interpolation=cv2.INTER_NEAREST)
+        # 2. 元の大きさに戻す（拡大）
+        # cv2.INTER_NEAREST(最近傍法)を使うと、ドット絵のようになる
+        mosaic_face = cv2.resize(small_face, (w, h), interpolation=cv2.INTER_NEAREST)
+
+        # C. 元の画像に貼り戻す
+        frame[y : y+h, x : x+w] = mosaic_face
+
+        # 赤枠線も学びの記録として残しておくcv2.rectangle(画像, 左上座標, 右下座標, 色（BGR）, 線の太さ)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
     # 7. 結果を画面に表示する
