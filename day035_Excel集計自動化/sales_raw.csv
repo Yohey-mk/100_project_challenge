@@ -1,0 +1,101 @@
+﻿date,brand,category,product,price,quantity
+2026-01-25,NIKE,Shoes,DUNK,15400,1
+2026-01-24,Adidas,Apparel,Jacket,5155,1
+2026-01-25,HOKA,Shoes,Hopara,18150,2
+2026-01-08,NIKE,Accessery,Caps,14170,1
+2026-01-07,NIKE,Other,Other,2700,2
+2026-01-15,NIKE,Accessery,Socks,6575,2
+2026-01-17,NIKE,Apparel,Jacket,16295,1
+2026-01-07,Asics,Shoes,Gel-Nunobiki,15400,2
+2026-01-06,HOKA,Other,Other,3791,3
+2026-01-12,ON,Accessery,Caps,2911,1
+2026-01-19,New Balance,Apparel,Outer,7525,1
+2026-01-05,NIKE,Shoes,Air Jordan 1,16500,1
+2026-01-27,Asics,Shoes,Metaspeed,29700,2
+2026-01-25,NIKE,Accessery,Bags,14029,3
+2026-01-01,Adidas,Other,Other,3103,2
+2026-01-22,New Balance,Shoes,530,12980,3
+2026-01-28,Adidas,Other,Other,4760,3
+2026-01-10,New Balance,Other,Other,4992,1
+2026-01-08,New Balance,Apparel,Outer,7226,1
+2026-01-02,NIKE,Accessery,Caps,14306,2
+2026-01-16,HOKA,Apparel,Outer,15209,3
+2026-01-10,HOKA,Shoes,Bondi 9,24200,1
+2026-01-19,ON,Apparel,Outer,17005,2
+2026-01-13,ON,Shoes,Cloud 6,18700,3
+2026-01-15,HOKA,Accessery,Bags,3473,3
+2026-01-29,Adidas,Apparel,Outer,14415,1
+2026-01-14,Adidas,Apparel,Jacket,17909,2
+2026-01-28,HOKA,Accessery,Other,8971,1
+2026-01-31,Asics,Apparel,Tops,8678,3
+2026-01-29,NIKE,Apparel,Tops,5505,2
+2026-01-16,New Balance,Other,Other,4680,3
+2026-01-14,Asics,Apparel,Bottoms,9040,3
+2026-01-25,ON,Other,Other,3840,2
+2026-01-25,Asics,Accessery,Other,11347,3
+2026-01-25,Asics,Shoes,Gel-Kayano,28600,3
+2026-01-25,Adidas,Shoes,Stan Smith,13200,1
+2026-01-19,ON,Shoes,Cloudtilt,23100,2
+2026-01-02,HOKA,Other,Other,3714,1
+2026-01-27,Adidas,Accessery,Other,3139,2
+2026-01-03,Asics,Apparel,Bottoms,11979,3
+2026-01-14,HOKA,Accessery,Other,6503,2
+2026-01-25,NIKE,Other,Other,2446,2
+2026-01-19,Adidas,Accessery,Caps,3930,2
+2026-01-29,NIKE,Accessery,Caps,1892,2
+2026-01-03,NIKE,Shoes,Vomero,22330,2
+2026-01-22,Asics,Other,Other,3009,3
+2026-01-24,NIKE,Shoes,Air Force1,16500,2
+2026-01-22,Asics,Apparel,Outer,19128,1
+2026-01-20,Asics,Shoes,Gel-NYC,18700,3
+2026-01-17,Adidas,Apparel,Tops,10903,1
+2026-01-24,NIKE,Shoes,Air Force1,16500,2
+2026-01-13,New Balance,Shoes,CM996,16940,1
+2026-01-30,Asics,Apparel,Outer,14290,3
+2026-01-31,Adidas,Accessery,Other,5008,3
+2026-01-10,ON,Accessery,Bags,5120,1
+2026-01-24,ON,Shoes,Cloudtilt,23100,2
+2026-01-07,ON,Shoes,Cloud 6,18700,2
+2026-01-02,New Balance,Apparel,Bottoms,5043,3
+2026-01-20,New Balance,Other,Other,1120,3
+2026-01-27,Asics,Shoes,Gel-NYC,18700,1
+2026-01-26,Asics,Other,Other,3330,1
+2026-01-31,Adidas,Accessery,Other,11569,2
+2026-01-06,HOKA,Apparel,Bottoms,16999,1
+2026-01-08,Asics,Other,Other,3751,1
+2026-01-11,New Balance,Apparel,Tops,15410,3
+2026-01-18,Adidas,Other,Other,513,1
+2026-01-19,New Balance,Other,Other,889,2
+2026-01-13,Asics,Shoes,Gel-Kayano,28600,3
+2026-01-09,New Balance,Accessery,Bags,1085,1
+2026-01-23,Adidas,Accessery,Other,2172,2
+2026-01-29,HOKA,Apparel,Jacket,9852,3
+2026-01-16,New Balance,Shoes,574 Core,13970,2
+2026-01-05,HOKA,Shoes,Bondi 9,24200,2
+2026-01-20,ON,Other,Other,4009,3
+2026-01-07,New Balance,Shoes,530,12980,3
+2026-01-14,Asics,Apparel,Other,6684,1
+2026-01-24,HOKA,Apparel,Tops,18790,2
+2026-01-22,ON,Other,Other,2903,1
+2026-01-19,Adidas,Apparel,Outer,7717,2
+2026-01-10,NIKE,Shoes,Vomero,22330,2
+2026-01-31,Asics,Other,Other,4296,3
+2026-01-25,Asics,Apparel,Outer,9712,1
+2026-01-27,ON,Shoes,Cloudrock,24200,2
+2026-01-16,Asics,Accessery,Caps,12031,2
+2026-01-04,NIKE,Shoes,Air Force1,16500,3
+2026-01-16,HOKA,Other,Other,4618,2
+2026-01-01,HOKA,Shoes,Mafate,29700,3
+2026-01-13,Adidas,Accessery,Caps,4466,1
+2026-01-10,Adidas,Shoes,Tobacco,15400,3
+2026-01-06,Asics,Accessery,Caps,4723,2
+2026-01-12,Asics,Other,Other,1364,2
+2026-01-25,New Balance,Accessery,Other,7486,3
+2026-01-28,HOKA,Apparel,Jacket,17072,3
+2026-01-25,ON,Apparel,Jacket,10539,1
+2026-01-12,New Balance,Other,Other,2050,2
+2026-01-31,New Balance,Accessery,Bags,8327,1
+2026-01-20,Adidas,Accessery,Caps,2148,1
+2026-01-12,New Balance,Apparel,Outer,17306,1
+2026-01-09,Asics,Apparel,Tops,19465,2
+2026-01-28,Asics,Shoes,Gel-Nimbus,20900,2
