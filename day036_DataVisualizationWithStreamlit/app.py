@@ -17,12 +17,25 @@ def load_data():
     # Excelファイルを読み込む
     df = pd.read_excel("sales_report.xlsx", sheet_name="raw_data")
     df["total_sales"] = df["price"] * df["quantity"]
+    df["date"] = pd.to_datetime(df["date"])
     return df
 
 df = load_data()
 
 # 4. サイドバーを作る（フィルタリング機能）
 st.sidebar.header("Filter Options")
+
+# 日付フィルター
+min_date = df["date"].min()
+max_date = df["date"].max()
+
+# 日付選択（デフォルトは全期間）
+date_range = st.sidebar.date_input(
+    "日付範囲を選択",
+    value=[min_date, max_date],
+    min_value=min_date,
+    max_value=max_date
+)
 
 # ブランド選択フィルター
 selected_brands = st.sidebar.multiselect(
@@ -31,8 +44,22 @@ selected_brands = st.sidebar.multiselect(
     default=df["brand"].unique() # 最初は全部選択
 )
 
-# 選択されたブランドだけでデータを絞り込む
-filtered_df = df[df['brand'].isin(selected_brands)]
+# dateの中身がちゃんと２つあるか確認する
+if len(date_range) == 2:
+    start_date, end_date = date_range
+
+    # 選択されたブランドだけでデータを絞り込む
+    filtered_df = df[
+        (df['brand'].isin(selected_brands)) &
+        (df["date"] >= pd.to_datetime(start_date)) &
+        (df["date"] <= pd.to_datetime(end_date))
+        ]
+elif len(date_range) == 1:
+    st.sidebar.warning("Select the end date.")
+    st.stop()
+
+else:
+    filtered_df = df
 
 # 5. KPIを表示
 total_sales = filtered_df['total_sales'].sum()
