@@ -53,11 +53,19 @@ if uploaded_file is not None:
         if len(hierarchy_cols) == 0:
             st.error("階層項目を1つ以上選んでください")
         else:
+            # 階層に選ばれたカラムに空白（NaN）があったら上の値で埋める（ffill）
+            # 一番上が空白だった場合、"不明"で埋める（fillna）
+            df_clean = df.copy()
+            df_clean[hierarchy_cols] = df_clean[hierarchy_cols].ffill().fillna("不明")
+
+            # 念の為、値（売上など）が空っぽの行も0にしておく
+            df_clean[value_col] = df_clean[value_col].fillna(0)
+
             # Treemapを作成
             # 階層パス（path）にはhierarchy_colsをそのまま渡す
             # 値（values）には選んだvalue_colを渡す
             fig = px.treemap(
-                df,
+                df_clean,
                 path=hierarchy_cols,
                 values=value_col,
                 title="カスタムツリーマップ"
