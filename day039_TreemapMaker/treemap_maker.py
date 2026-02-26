@@ -3,8 +3,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-import numpy as np
 
 st.set_page_config(page_title="汎用グラフメーカー", layout="wide")
 st.title("汎用グラフメーカー")
