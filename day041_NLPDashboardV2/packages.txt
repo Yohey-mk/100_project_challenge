@@ -1,1 +1,3 @@
 locales
+language-pack-ja
+language-pack-en
