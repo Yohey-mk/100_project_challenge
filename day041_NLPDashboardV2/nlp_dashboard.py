@@ -2,8 +2,8 @@
 
 import os
 # OSの言語設定を汎用的な「C.UTF-8」に強制的に固定し、Streamlit Cloudで動くか確認
-os.environ["LC_ALL"] = "C.UTF-8"
-os.environ["LANG"] = "C.UTF-8"
+os.environ["LC_ALL"] = "en_US.UTF-8"
+os.environ["LANG"] = "en_US.UTF-8"
 
 import streamlit as st
 import pandas as pd
