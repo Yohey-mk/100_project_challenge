@@ -1,0 +1,11 @@
+# requirements.text
+
+streamlit
+pandas
+matplotlib
+wordcloud
+plotly
+sudachipy
+sudachidict_core
+asari
+openpyxl
