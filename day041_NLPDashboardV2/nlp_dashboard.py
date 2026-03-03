@@ -1,9 +1,10 @@
 # nlp_dashboard.py
 
-import os
+### Streamlit Cloud側の仕様か、OSの言語設定を変更してもAsariが使えなかったのでコメントアウト
+#import os
 # OSの言語設定を汎用的な「C.UTF-8」に強制的に固定し、Streamlit Cloudで動くか確認
-os.environ["LC_ALL"] = "en_US.UTF-8"
-os.environ["LANG"] = "en_US.UTF-8"
+# os.environ["LC_ALL"] = "en_US.UTF-8"
+# os.environ["LANG"] = "en_US.UTF-8"
 
 import streamlit as st
 import pandas as pd
