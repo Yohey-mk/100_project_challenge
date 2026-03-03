@@ -2,10 +2,9 @@
 
 streamlit
 pandas
-matplotlib.pyplot
-wordcloud
+matplotlib
 plotly
 sudachipy
 sudachidict_core
-asari.api
+asari
 openpyxl
