@@ -73,3 +73,32 @@ def read_books():
     # 辞書のリストに変換して返す（RowFactoryを使うことでシンプルに記述できるようになった）
     return [dict(row) for row in books]
 
+# 5. 本を削除するAPI
+@app.delete("/books/{book_id}")
+def delete_book(book_id: int):
+    conn = sqlite3.connect("reading_log.db")
+    c = conn.cursor()
+
+    # データを削除する（SQL）
+    c.execute('DELETE FROM books WHERE id = ?', (book_id,))
+
+    conn.commit()
+    conn.close()
+    return {"message": "Book deleted successfully"}
+
+# 6. 本を更新するAPI（PUT）
+@app.put("/books/{book_id}")
+def update_book(book_id: int, book: BookCreate):
+    conn = sqlite3.connect("reading_log.db")
+    c = conn.cursor()
+
+    #データを更新する
+    c.execute('''
+        UPDATE books
+              SET title=?, author=?, rating=?, review=?, emotion=?
+              WHERE id = ?
+              ''', (book.title, book.author, book.rating, book.review, book.emotion, book_id))
+    
+    conn.commit()
+    conn.close()
+    return {"id": book_id, **book.model_dump(), "status": "updated"}
