@@ -19,6 +19,12 @@ def main(page: ft.Page):
     # text uiの参照を保存する辞書（文字だけをピンポイントで書き換えるため）
     time_texts = {}
 
+    # format time
+    def get_formatted_time(seconds: int) -> str:
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
+
     # 2. タイマーFunction
     async def timer_tick():
         nonlocal active_task # 関数の中から外部の変数（active_task）を書き換える
@@ -27,10 +33,7 @@ def main(page: ft.Page):
             if active_task is not None:
                 # 1. アクティブタスクの時間を１秒増やす
                 task_states[active_task] += 1
-                # divmodを使って秒数をHHMMSSに変換
-                m, s = divmod(task_states[active_task], 60)
-                h, m = divmod(m, 60)
-                time_formatted = f"{h:02d}:{m:02d}:{s:02d}"
+                time_formatted = get_formatted_time(task_states[active_task])
                 # 2. 該当するUIのテキストの値を書き換える
                 time_texts[active_task].value = time_formatted
                 # 3. テキストだけを最新化して描画
@@ -56,7 +59,7 @@ def main(page: ft.Page):
     # 辞書のキーを使って、for文でUIを量産
     for task_name in task_states.keys():
         # 初期状態のテキストを作成、辞書に登録
-        time_texts[task_name] = ft.Text("00:00:00", size=20)
+        time_texts[task_name] = ft.Text("00:00:00", size=12, selectable=True)
 
         row = ft.Row(
             controls=[
@@ -64,7 +67,8 @@ def main(page: ft.Page):
                     content=ft.Text(f"{task_name}"),
                     data=task_name,
                     on_click=handle_task_click,
-                    width=150
+                    width=100,
+                    scale=0.9,
                 ),
                 time_texts[task_name]
             ]
@@ -72,7 +76,7 @@ def main(page: ft.Page):
         task_rows.append(row)
 
     # functions conponents
-    aot_switch = ft.Switch(label="Always On Top", value=True)
+    aot_switch = ft.Switch(label="Always On Top", value=True, scale=0.9)
     def toggle_aot(e):
         page.window.always_on_top = e.control.value
         page.update()
@@ -84,12 +88,52 @@ def main(page: ft.Page):
         content=ft.Column(controls=task_rows),
         margin=ft.Margin(top=20)
         )
+    
+    # DataTable & Excel用コピー機能
+    summary_text_field = ft.TextField(
+        multiline=True,
+        read_only=True,
+        value="test",
+        text_size=12,
+        visible=False
+    )
+
+    async def copy_to_clipboard():
+        await ft.Clipboard().set(summary_text_field.value)
+        page.show_dialog(ft.SnackBar("Text copied to clipboard"))
+    copy_btn = ft.Button("Copy", on_click=copy_to_clipboard, visible=True)
+
+    # 1. 画面に表示するDataTableの枠組みを作る
+    def open_summary(e):
+        is_visible = not summary_text_field.visible
+        summary_text_field.visible = is_visible
+        copy_btn.visible = is_visible
+
+        if is_visible:
+            copy_lines = ["Task Name\tTime"]
+
+            for task_name, seconds in task_states.items():
+                formatted_time = get_formatted_time(seconds)
+                copy_lines.append(f"{task_name}\t{formatted_time}")
+
+            summary_text_field.value = "\n".join(copy_lines)
+            page.window.height = 600
+        else:
+            page.window.height = 400
+
+        page.update()
+
+    # 6. 集計データを見る
+    summary_btn = ft.Button("集計データを見る", on_click=open_summary)
 
     # Page.add
     page.add(
         msg,
         aot_switch,
         btns_container,
+        summary_text_field,
+        copy_btn,
+        summary_btn
     )
 
     # 5. アプリの裏側での仕様
@@ -98,6 +142,8 @@ def main(page: ft.Page):
 ft.run(main)
 
 
-# memo
-# 将来的にエクセルなどに直接貼り付けられるように集計データをテーブル化
-# 計測した時間の編集機能（一時停止などをし忘れた場合に編集できるようにする）
+# memo（段階的実装プラン）
+# ①将来的にエクセルなどに直接貼り付けられるように集計データをテーブル化
+# ②計測した時間の編集機能（一時停止などをし忘れた場合に編集できるようにする）
+# ③アプリを間違って消しても前回の記録から再開する / 確認ポップアップ付きでリセットする
+# ④タスク選択をフォルダ化（タスクが多岐に渡る場合は「レポート業務」「実務」「その他」の大カテゴリから小カテゴリ（実務などの詳細）のボタンで計測開始する）
