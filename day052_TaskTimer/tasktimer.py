@@ -6,7 +6,7 @@ import asyncio
 def main(page: ft.Page):
     page.title = "TaskTracker"
     page.scroll = "auto"
-    page.window.width = 300
+    page.window.width = 250
     page.window.height = 400
     page.theme_mode = "LIGHT"
     page.window.always_on_top = True
@@ -15,6 +15,16 @@ def main(page: ft.Page):
     # 各タスクの経過時間を保存する辞書
     task_states = {"Coding": 0, "メール作業": 0, "休憩": 0}
     active_task = None # 現在計測中のタスク名（Noneなら停止中）
+    # データのロード
+    task_states_list = list(task_states.items())
+
+    #async def saved_states():
+    #    await ft.SharedPreferences().set(task_states.value, task_states.value)
+    #    task_states.value = task_states.keys().value
+    #    print(task_states.value)
+
+    #if saved_states is not None:
+    #    task_states = saved_states
 
     # text uiの参照を保存する辞書（文字だけをピンポイントで書き換えるため）
     time_texts = {}
@@ -24,6 +34,15 @@ def main(page: ft.Page):
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         return f"{h:02d}:{m:02d}:{s:02d}"
+    
+    # 文字列を計算用の秒(int)に戻す関数
+    def time_to_seconds(time_str: str) -> int:
+        try:
+            #':'で分割し、h/m/sの数字に変換
+            h, m, s = map(int, time_str.split(":"))
+            return h * 3600 + m * 60 + s
+        except ValueError:
+            return -1 # フォーマットが間違っている場合は-1を返す
 
     # 2. タイマーFunction
     async def timer_tick():
@@ -54,6 +73,59 @@ def main(page: ft.Page):
 
         page.update()
 
+    # 編集機能の実装
+    edit_target_task = None
+    edit_time_field = ft.TextField("00:00:00", text_size=12, width=100, height=35, border_radius=10)
+    # 保存ボタンが押された時の処理
+    def save_edited_time(e):
+        nonlocal edit_target_task
+        new_seconds = time_to_seconds(edit_time_field.value)
+        if new_seconds >= 0:
+            task_states[edit_target_task] = new_seconds
+            time_texts[edit_target_task].value = get_formatted_time(new_seconds)
+            #edit_dialog.open = False
+            page.update()
+            page.show_dialog(ft.SnackBar(ft.Text(f"Edited: {edit_target_task}")))
+            page.update()
+        else:
+            page.show_dialog(ft.SnackBar(ft.Text("Invalid format!")))
+            page.update()
+
+    #def close_edit_dialog(e):
+    #    edit_dialog.open = False
+    #    page.update()
+
+    save_btn = ft.IconButton(icon=ft.Icons.SAVE, icon_size=20, on_click=save_edited_time)
+    #close_btn = ft.Button(ft.Text("Cancel"), on_click=close_edit_dialog)
+
+    # 編集用ダイアログ
+    edit_dialog = ft.AlertDialog(
+        title=ft.Text("Edit"),
+        content=edit_time_field,
+        actions=[
+            ft.TextButton("Save", on_click=save_edited_time),
+        ]
+    )
+    page.services.append(edit_dialog)
+
+    def open_edit_dialog(e):
+        nonlocal edit_target_task
+        edit_target_task = e.control.data
+        edit_time_field.value = time_texts[edit_target_task].value
+        edit_dialog.title = ft.Text(f"Edit: {edit_target_task}")
+        edit_dialog.open = True
+        page.update()
+
+    edit_text = ft.Text("EDIT: ")
+
+    edit_and_save = ft.Row(
+        controls=[
+            edit_text,
+            edit_time_field,
+            save_btn,
+        ]
+    )
+
     # 4. レイアウト構築
     task_rows = []
     # 辞書のキーを使って、for文でUIを量産
@@ -70,7 +142,14 @@ def main(page: ft.Page):
                     width=100,
                     scale=0.9,
                 ),
-                time_texts[task_name]
+                time_texts[task_name],
+
+                ft.IconButton(
+                    icon=ft.Icons.EDIT,
+                    data=task_name,
+                    on_click=open_edit_dialog,
+                    icon_size=16
+                )
             ]
         )
         task_rows.append(row)
@@ -93,47 +172,48 @@ def main(page: ft.Page):
     summary_text_field = ft.TextField(
         multiline=True,
         read_only=True,
-        value="test",
+        value="",
         text_size=12,
-        visible=False
+        visible=True
     )
 
-    async def copy_to_clipboard():
-        await ft.Clipboard().set(summary_text_field.value)
-        page.show_dialog(ft.SnackBar("Text copied to clipboard"))
-    copy_btn = ft.Button("Copy", on_click=copy_to_clipboard, visible=True)
+    # 集計データをコピーに集約
+    #async def copy_to_clipboard():
+    #    await ft.Clipboard().set(summary_text_field.value)
+    #    page.show_dialog(ft.SnackBar("Text copied to clipboard"))
+    #copy_btn = ft.Button("Copy", on_click=copy_to_clipboard, visible=True)
 
     # 1. 画面に表示するDataTableの枠組みを作る
-    def open_summary(e):
-        is_visible = not summary_text_field.visible
+    async def open_summary(e):
+        is_visible = summary_text_field.visible
         summary_text_field.visible = is_visible
-        copy_btn.visible = is_visible
 
         if is_visible:
-            copy_lines = ["Task Name\tTime"]
+            copy_lines = []
 
             for task_name, seconds in task_states.items():
                 formatted_time = get_formatted_time(seconds)
                 copy_lines.append(f"{task_name}\t{formatted_time}")
 
             summary_text_field.value = "\n".join(copy_lines)
-            page.window.height = 600
+            await ft.Clipboard().set(summary_text_field.value)
+            page.show_dialog(ft.SnackBar(ft.Text("Copied!")))
         else:
             page.window.height = 400
 
         page.update()
 
-    # 6. 集計データを見る
-    summary_btn = ft.Button("集計データを見る", on_click=open_summary)
+    # 6. 集計データをコピー
+    summary_btn = ft.Button("集計データをCopy", on_click=open_summary)
 
     # Page.add
     page.add(
         msg,
         aot_switch,
         btns_container,
+        edit_and_save,
+        summary_btn,
         summary_text_field,
-        copy_btn,
-        summary_btn
     )
 
     # 5. アプリの裏側での仕様
