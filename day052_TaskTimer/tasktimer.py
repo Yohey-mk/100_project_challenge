@@ -2,8 +2,10 @@
 
 import flet as ft
 import asyncio
+import json
+from datetime import datetime
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     page.title = "TaskTracker"
     page.scroll = "auto"
     page.window.width = 250
@@ -14,20 +16,23 @@ def main(page: ft.Page):
     # 1. 状態管理(State)
     # 各タスクの経過時間を保存する辞書
     task_states = {"Coding": 0, "メール作業": 0, "休憩": 0}
+    task_list = ft.Dropdown(value="Select task",
+                            options=[
+                                ft.DropdownOption(key="Coding", text="Coding"),
+                                ft.DropdownOption(key="メール作業", text="メール作業"),
+                                ft.DropdownOption(key="休憩", text="休憩"),])
     active_task = None # 現在計測中のタスク名（Noneなら停止中）
-    # データのロード
-    task_states_list = list(task_states.items())
-
-    #async def saved_states():
-    #    await ft.SharedPreferences().set(task_states.value, task_states.value)
-    #    task_states.value = task_states.keys().value
-    #    print(task_states.value)
-
-    #if saved_states is not None:
-    #    task_states = saved_states
-
     # text uiの参照を保存する辞書（文字だけをピンポイントで書き換えるため）
     time_texts = {}
+
+    # データのロード
+    async def load_data():
+        nonlocal task_states
+        saved_str = await ft.SharedPreferences().get("task_states")
+        if saved_str:
+            task_states = json.loads(saved_str)
+    
+    await load_data()
 
     # format time
     def get_formatted_time(seconds: int) -> str:
@@ -47,7 +52,6 @@ def main(page: ft.Page):
     # 2. タイマーFunction
     async def timer_tick():
         nonlocal active_task # 関数の中から外部の変数（active_task）を書き換える
-
         while True:
             if active_task is not None:
                 # 1. アクティブタスクの時間を１秒増やす
@@ -56,6 +60,8 @@ def main(page: ft.Page):
                 # 2. 該当するUIのテキストの値を書き換える
                 time_texts[active_task].value = time_formatted
                 # 3. テキストだけを最新化して描画
+                states_str = json.dumps(task_states)
+                await ft.SharedPreferences().set("task_states", states_str)
                 page.update()
             await asyncio.sleep(1)
 
@@ -70,21 +76,21 @@ def main(page: ft.Page):
         else:
             active_task = clicked_task
             page.title = f"TaskTracker - {active_task}"
-
         page.update()
 
     # 編集機能の実装
     edit_target_task = None
     edit_time_field = ft.TextField("00:00:00", text_size=12, width=100, height=35, border_radius=10)
     # 保存ボタンが押された時の処理
-    def save_edited_time(e):
+    async def save_edited_time(e):
         nonlocal edit_target_task
         new_seconds = time_to_seconds(edit_time_field.value)
         if new_seconds >= 0:
             task_states[edit_target_task] = new_seconds
             time_texts[edit_target_task].value = get_formatted_time(new_seconds)
-            #edit_dialog.open = False
-            page.update()
+            page.show_dialog(ft.SnackBar(ft.Text(f"Edited: {edit_target_task}")))
+            states_str = json.dumps(task_states)
+            await ft.SharedPreferences().set("task_states", states_str)
             page.show_dialog(ft.SnackBar(ft.Text(f"Edited: {edit_target_task}")))
             page.update()
         else:
@@ -126,12 +132,30 @@ def main(page: ft.Page):
         ]
     )
 
+    async def reset_all_tasks(e):
+        for task in task_states:
+            task_states[task] = 0
+            time_texts[task].value = "00:00:00"
+        states_str = json.dumps(task_states)
+        await ft.SharedPreferences().set("task_states", states_str)
+        page.show_dialog(ft.SnackBar(ft.Text("記録をリセットしました")))
+        page.update()
+
+    def close_reset_dialog(e):
+        page.close(reset_warning)
+
+    reset_warning = ft.Container(
+        content=ft.Row(controls=[
+            ft.TextButton("RESET", on_click=reset_all_tasks, style=ft.ButtonStyle(color=ft.Colors.RED))
+        ])
+    )
+
     # 4. レイアウト構築
     task_rows = []
     # 辞書のキーを使って、for文でUIを量産
-    for task_name in task_states.keys():
+    for task_name, seconds in task_states.items():
         # 初期状態のテキストを作成、辞書に登録
-        time_texts[task_name] = ft.Text("00:00:00", size=12, selectable=True)
+        time_texts[task_name] = ft.Text(get_formatted_time(seconds), size=12, selectable=True)
 
         row = ft.Row(
             controls=[
@@ -205,6 +229,7 @@ def main(page: ft.Page):
 
     # 6. 集計データをコピー
     summary_btn = ft.Button("集計データをCopy", on_click=open_summary)
+    reset_btn = ft.Button("ALL RESET", on_click=reset_all_tasks, style=ft.ButtonStyle(color=ft.Colors.RED))
 
     # Page.add
     page.add(
@@ -214,6 +239,7 @@ def main(page: ft.Page):
         edit_and_save,
         summary_btn,
         summary_text_field,
+        reset_btn,
     )
 
     # 5. アプリの裏側での仕様
