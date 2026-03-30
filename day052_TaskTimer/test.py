@@ -1,4 +1,4 @@
-# test.py
+# tasktimer.py
 
 import flet as ft
 import asyncio
@@ -8,17 +8,16 @@ from datetime import datetime
 async def main(page: ft.Page):
     page.title = "TaskTracker Pro"
     page.window.width = 300
-    page.window.height = 450
+    page.window.height = 550
     page.theme_mode = "LIGHT"
-    page.window.always_on_top = False
+    page.window.always_on_top = True
 
-    # 1. 状態管理 (新しいデータ構造)
-    task_history = []  # 過去の完了したタスク履歴のリスト
-    active_session = None  # 現在計測中のセッション情報（Noneなら停止中）
-    
-    # 画面表示用の変数
+    # --- 1. 状態管理 ---
+    task_history = []
+    active_session = None
     current_seconds = 0
-    is_paused = False
+    # 内部ステータス: "READY", "RUNNING", "PAUSED"
+    app_status = "READY"
 
     # --- 💾 データのロード ---
     async def load_data():
@@ -29,213 +28,154 @@ async def main(page: ft.Page):
     
     await load_data()
 
-    # --- 🕰️ 時間フォーマット関数 ---
+    # --- 🕰️ ヘルパー関数 ---
     def get_formatted_time(seconds: int) -> str:
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         return f"{h:02d}:{m:02d}:{s:02d}"
 
-    # --- 🔄 タイマーの裏側処理 ---
+    # --- 🔄 タイマーロジック ---
     async def timer_tick():
         nonlocal current_seconds
         while True:
-            if active_session is not None and not is_paused:
+            if app_status == "RUNNING":
                 current_seconds += 1
                 timer_text.value = get_formatted_time(current_seconds)
                 page.update()
             await asyncio.sleep(1)
 
-    # --- 🎮 ボタンの処理 ---
-    
-    # START / STOP ボタン
-    async def handle_start_stop(e):
-        nonlocal active_session, current_seconds, is_paused
+    # --- 🎮 ボタン制御ロジック ---
+    def update_ui_state():
+        # ステータスに応じてボタンの有効・無効を切り替え
+        start_btn.visible = (app_status == "READY")
+        pause_btn.visible = (app_status == "RUNNING")
+        resume_btn.visible = (app_status == "PAUSED")
+        finish_btn.visible = (app_status in ["RUNNING", "PAUSED"])
         
-        # 【START処理】
-        if active_session is None:
-            if task_dropdown.value is None or task_dropdown.value == "Select task":
-                page.show_dialog(ft.SnackBar(ft.Text("タスクを選択してください！")))
-                return
-
-            now = datetime.now()
-            # 新しいセッションデータを作成
-            active_session = {
-                "date": now.strftime("%Y-%m-%d"),
-                "task": task_dropdown.value,
-                "start_time": now.strftime("%H:%M:%S"),
-                "end_time": "",
-                "pauses": [],
-                "duration_seconds": 0
-            }
-            current_seconds = 0
-            is_paused = False
-            
-            # UIの更新
-            start_stop_btn.text = "STOP"
-            start_stop_btn.icon = ft.Icons.STOP
-            start_stop_btn.style = ft.ButtonStyle(color=ft.Colors.RED)
-            pause_btn.disabled = False
-            task_dropdown.disabled = True
-            status_text.value = f"Running: {active_session['task']}"
-
-        # 【STOP処理】
-        else:
-            now = datetime.now()
-            # 終了処理を記録
-            active_session["end_time"] = now.strftime("%H:%M:%S")
-            active_session["duration_seconds"] = current_seconds
-            
-            # もし一時停止中のままSTOPを押されたら、一時停止の終了時間も記録
-            if is_paused and active_session["pauses"]:
-                active_session["pauses"][-1]["end"] = now.strftime("%H:%M:%S")
-
-            # 履歴リストに追加して保存
-            task_history.append(active_session)
-            states_str = json.dumps(task_history)
-            await ft.SharedPreferences().set("task_history", states_str)
-
-            # リセット
-            active_session = None
-            is_paused = False
-            current_seconds = 0
-            
-            # UIの更新
-            start_stop_btn.text = "START"
-            start_stop_btn.icon = ft.Icons.PLAY_ARROW
-            start_stop_btn.style = ft.ButtonStyle(color=ft.Colors.BLUE)
-            pause_btn.disabled = True
-            pause_btn.text = "PAUSE"
-            pause_btn.icon = ft.Icons.PAUSE
-            task_dropdown.disabled = False
-            timer_text.value = "00:00:00"
-            status_text.value = "Ready"
-            page.show_dialog(ft.SnackBar(ft.Text("記録を保存しました！")))
-
+        task_dropdown.disabled = (app_status != "READY")
+        status_label.value = f"Status: {app_status}"
         page.update()
 
-    # PAUSE / RESUME ボタン
+    async def handle_start(e):
+        nonlocal active_session, current_seconds, app_status
+        if task_dropdown.value == "Select task":
+            page.show_dialog(ft.SnackBar(ft.Text("タスクを選択してください")))
+            return
+        
+        now = datetime.now()
+        active_session = {
+            "date": now.strftime("%Y-%m-%d"),
+            "task": task_dropdown.value,
+            "start_time": now.strftime("%H:%M:%S"),
+            "pauses": [],
+            "end_time": "",
+            "duration_seconds": 0
+        }
+        current_seconds = 0
+        app_status = "RUNNING"
+        update_ui_state()
+
     async def handle_pause(e):
-        nonlocal is_paused, active_session
-        if active_session is None: return
-
+        nonlocal app_status
         now = datetime.now().strftime("%H:%M:%S")
+        active_session["pauses"].append({"start": now, "end": ""})
+        app_status = "PAUSED"
+        update_ui_state()
 
-        if not is_paused:
-            # 【PAUSE処理】
-            is_paused = True
-            # ポーズの開始時間を記録
-            active_session["pauses"].append({"start": now, "end": ""})
-            pause_btn.text = "RESUME"
-            pause_btn.icon = ft.Icons.PLAY_CIRCLE_FILL
-            status_text.value = "Paused"
-        else:
-            # 【RESUME処理】
-            is_paused = False
-            # 最新のポーズの終了時間を記録
-            if active_session["pauses"]:
-                active_session["pauses"][-1]["end"] = now
-            pause_btn.text = "PAUSE"
-            pause_btn.icon = ft.Icons.PAUSE
-            status_text.value = f"Running: {active_session['task']}"
+    async def handle_resume(e):
+        nonlocal app_status
+        now = datetime.now().strftime("%H:%M:%S")
+        if active_session["pauses"]:
+            active_session["pauses"][-1]["end"] = now
+        app_status = "RUNNING"
+        update_ui_state()
 
-        page.update()
+    async def handle_finish(e):
+        nonlocal active_session, app_status, task_history
+        now = datetime.now()
+        
+        # もし一時停止中にFINISHされたら、最後のPAUSEを閉じる
+        if app_status == "PAUSED" and active_session["pauses"]:
+            active_session["pauses"][-1]["end"] = now.strftime("%H:%M:%S")
+            
+        active_session["end_time"] = now.strftime("%H:%M:%S")
+        active_session["duration_seconds"] = current_seconds
+        
+        # 履歴に保存
+        task_history.append(active_session)
+        await ft.SharedPreferences().set("task_history", json.dumps(task_history))
+        
+        # リセット
+        app_status = "READY"
+        active_session = None
+        timer_text.value = "00:00:00"
+        page.show_dialog(ft.SnackBar(ft.Text("記録を完了しました！")))
+        update_ui_state()
 
-    # --- 📊 UI構築 ---
-
-    aot_switch = ft.Switch(label="Always On Top", value=False, scale=0.9)
-    def toggle_aot(e):
-        page.window.always_on_top = e.control.value
-        page.update()
-    aot_switch.on_change = toggle_aot
-
+    # --- 📊 UIコンポーネント ---
     task_dropdown = ft.Dropdown(
         value="Select task",
         options=[
-            ft.DropdownOption(key="Coding", text="Coding"),
-            ft.DropdownOption(key="メール作業", text="メール作業"),
-            ft.DropdownOption(key="会議", text="会議"),
-            ft.DropdownOption(key="休憩", text="休憩"),
-        ],
-        width=250
+            ft.DropdownOption("Coding"),
+            ft.DropdownOption("メール作業"),
+            ft.DropdownOption("休憩"),
+        ], width=250
     )
 
-    timer_text = ft.Text("00:00:00", size=20, weight=ft.FontWeight.BOLD)
-    status_text = ft.Text("Ready", color=ft.Colors.GREY)
+    timer_text = ft.Text("00:00:00", size=45, weight="bold")
+    status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
 
-    start_stop_btn = ft.ElevatedButton("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start_stop, style=ft.ButtonStyle(color=ft.Colors.BLUE))
-    pause_btn = ft.ElevatedButton("PAUSE", icon=ft.Icons.PAUSE, on_click=handle_pause, disabled=True)
+    start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=200)
+    pause_btn = ft.Button("PAUSE", icon=ft.Icons.PAUSE, on_click=handle_pause, bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, width=200, visible=False)
+    resume_btn = ft.Button("RESUME", icon=ft.Icons.PLAY_CIRCLE, on_click=handle_resume, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, width=200, visible=False)
+    finish_btn = ft.Button("FINISH", icon=ft.Icons.CHECK, on_click=handle_finish, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, width=200, visible=False)
 
-    controls_row = ft.Row([start_stop_btn, pause_btn])
+    summary_text_field = ft.TextField(multiline=True, read_only=True, visible=False, height=100, text_size=11)
 
-    # --- 📝 エクセル用出力機能 ---
-    summary_text_field = ft.TextField(multiline=True, read_only=True, value="", text_size=12, visible=True, height=150)
-
-    async def open_summary(e):
-        is_visible = summary_text_field.visible
-        summary_text_field.visible = is_visible
-
-        if is_visible:
-            # エクセルに貼り付けやすいようにタブ(\t)区切りでヘッダーを作成
-            copy_lines = ["Date\tTask\tStart\tEnd\tDuration\tPauses"]
-            
-            for session in task_history:
-                dur_str = get_formatted_time(session["duration_seconds"])
-                # ポーズ履歴を文字列化（例: 09:30-09:35, 10:00-10:10）
-                pauses_str = ", ".join([f"{p['start']}-{p['end']}" for p in session.get("pauses", [])])
-                
-                # タブ区切りでデータを結合
-                line = f"{session['date']}\t{session['task']}\t{session['start_time']}\t{session['end_time']}\t{dur_str}\t{pauses_str}"
-                copy_lines.append(line)
-
-            summary_text_field.value = "\n".join(copy_lines)
+    async def toggle_summary(e):
+        summary_text_field.visible = not summary_text_field.visible
+        if summary_text_field.visible:
+            lines = ["Date\tTask\tStart\tEnd\tDuration"]
+            for s in task_history:
+                lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{get_formatted_time(s['duration_seconds'])}")
+            summary_text_field.value = "\n".join(lines)
             await ft.Clipboard().set(summary_text_field.value)
-            page.window.height = 450
-            page.show_dialog(ft.SnackBar(ft.Text("Excel用にコピーしました！(そのまま貼り付け可能)")))
-        else:
-            page.window.height = 450
-
+            page.show_dialog(ft.SnackBar(ft.Text("コピーしました！")))
         page.update()
 
-    summary_btn = ft.Button("History＆Copy", on_click=open_summary)
+    reset_history = ft.TextButton("RESET HISTORY", on_click=lambda _: (task_history.clear(), ft.SharedPreferences().set("task_history", "[]"), page.update()))
 
-    # 全リセット機能
-    async def reset_history(e):
-        nonlocal task_history
-        task_history = []
-        await ft.SharedPreferences().set("task_history", json.dumps([]))
-        summary_text_field.value = ""
-        #page.close(reset_dialog)
-        page.show_dialog(ft.SnackBar(ft.Text("履歴を完全にリセットしました")))
-        page.update()
+    # --- レイアウト ---
+    page.add(
+        ft.Column([
+            task_dropdown,
+            ft.Container(timer_text, padding=20),
+            status_label,
+            ft.Divider(),
+            start_btn,
+            pause_btn,
+            resume_btn,
+            ft.Container(finish_btn, margin=ft.margin.only(top=10)),
+            ft.Divider(),
+            ft.Row([
+                ft.TextButton("📊 Log Copy", on_click=toggle_summary),
+                ft.TextButton("🗑️ Clear", on_click=reset_history)
+            ], alignment="center"),
+            summary_text_field
+        ], horizontal_alignment="center")
+    )
 
-    def close_reset_dialog(e):
-        page.close(reset_dialog)
-
+    # リセットダイアログ
     reset_dialog = ft.AlertDialog(
-        title=ft.Text("警告"),
-        content=ft.Text("過去の履歴をすべて削除しますか？"),
+        title=ft.Text("履歴のリセット"),
+        content=ft.Text("すべての履歴を削除しますか？"),
         actions=[
-            ft.TextButton("削除", on_click=reset_history, style=ft.ButtonStyle(color=ft.Colors.RED)),
-            ft.TextButton("キャンセル", on_click=close_reset_dialog)
+            ft.TextButton("削除", on_click=lambda _: (task_history.clear(), ft.SharedPreferences().set("task_history", "[]"), page.close(reset_dialog), page.update())),
+            ft.TextButton("キャンセル", on_click=lambda _: page.close(reset_dialog))
         ]
     )
 
-    reset_btn = ft.OutlinedButton("🗑️ RESET", on_click=reset_history)
-
-    # コンポーネントの配置
-    page.add(
-        ft.Column([
-            aot_switch,
-            task_dropdown,
-            ft.Container(content=timer_text),
-            ft.Container(content=status_text),
-            controls_row,
-            ft.Divider(height=30),
-            ft.Row([summary_btn, reset_btn]),
-            summary_text_field,
-        ])
-    )
-
     page.run_task(timer_tick)
+    update_ui_state() # 初期状態の反映
 
 ft.run(main)
