@@ -173,24 +173,63 @@ async def main(page: ft.Page):
         page.update()
 
     # --- レイアウト ---
+
+    tab_views = ft.SafeArea(
+    expand=True,
+    content=ft.Tabs(
+        selected_index=0,
+        length=2,
+        content=ft.Column(
+        controls=[
+            ft.TabBar(
+                tabs=[ft.Tab(label="Main"),
+                      ft.Tab(label="Settings", icon=ft.Icons.SETTINGS)]),
+    
+            ft.TabBarView(
+                expand=True,
+                controls=[
+                    ft.Container(
+                        content=ft.Column([
+                            aot_switch,
+                            task_dropdown,
+                            ft.Container(timer_text, padding=20),
+                            status_label,
+                            ft.Divider(),
+                            start_btn,
+                            pause_btn,
+                            resume_btn,
+                            ft.Container(finish_btn, margin=ft.Margin.only(top=10)),
+                            ft.Divider(),
+                            ft.Row([
+                                ft.TextButton("📊 Log Copy", on_click=toggle_summary),
+                                ft.TextButton("🗑️ Clear", on_click=reset_history)
+                            ], alignment="center"),
+                            summary_text_field,
+                            ], horizontal_alignment="center")
+                            ),
+                    ft.Container(content=ft.Text("This is Settings page"))
+        ])])))
+    
     page.add(
-        ft.Column([
-            task_dropdown,
-            ft.Container(timer_text, padding=20),
-            status_label,
-            ft.Divider(),
-            start_btn,
-            pause_btn,
-            resume_btn,
-            ft.Container(finish_btn, margin=ft.margin.only(top=10)),
-            ft.Divider(),
-            ft.Row([
-                ft.TextButton("📊 Log Copy", on_click=toggle_summary),
-                ft.TextButton("🗑️ Clear", on_click=reset_history)
-            ], alignment="center"),
-            summary_text_field,
-            aot_switch
-        ], horizontal_alignment="center")
+        tab_views,
+        #tab_lists,
+        #ft.Column([
+        #    aot_switch,
+        #    task_dropdown,
+        #    ft.Container(timer_text, padding=20),
+        #    status_label,
+        #    ft.Divider(),
+        #    start_btn,
+        #    pause_btn,
+        #    resume_btn,
+        #    ft.Container(finish_btn, margin=ft.Margin.only(top=10)),
+        #    ft.Divider(),
+        #    ft.Row([
+        #        ft.TextButton("📊 Log Copy", on_click=toggle_summary),
+        #        ft.TextButton("🗑️ Clear", on_click=reset_history)
+        #    ], alignment="center"),
+        #    summary_text_field,
+        #], horizontal_alignment="center")
     )
 
     # リセットダイアログ
