@@ -21,13 +21,24 @@ async def main(page: ft.Page):
     current_seconds = 0
     # 内部ステータス: "READY", "RUNNING", "PAUSED"
     app_status = "READY"
+    task_items = []
 
     # --- 💾 データのロード ---
     async def load_data():
-        nonlocal task_history
+        nonlocal task_history, task_items, summary_task_field
         saved_str = await ft.SharedPreferences().get("task_history")
+        saved_task_items = await ft.SharedPreferences().get("task_items")
+
         if saved_str:
             task_history = json.loads(saved_str)
+
+        if saved_task_items:
+            loaded_items = json.loads(saved_task_items)
+            # 読み込んだデータがリスト型かチェックする
+            if isinstance(loaded_items, list):
+                task_items = loaded_items
+            else:
+                task_items = [] #文字列などおかしなデータの場合はリセット
     
     await load_data()
 
@@ -129,18 +140,40 @@ async def main(page: ft.Page):
         page.update()
     aot_switch.on_change = toggle_aot
 
+    # Options for Dropdown
+    initial_options = task_items if task_items else ["SE", "Reporting", "External_Meeting", "Internal_Meeting", "Training", "Other tasks", "Short Break"]
+
     task_dropdown = ft.Dropdown(
         value="Select task",
-        options=[
-            ft.DropdownOption("SE"),
-            ft.DropdownOption("Reporting"),
-            ft.DropdownOption("External_Meeting"),
-            ft.DropdownOption("Internal_Meeting"),
-            ft.DropdownOption("Training"),
-            ft.DropdownOption("Other tasks"),
-            ft.DropdownOption("Short Break"),
-        ], width=250
+        options=[ft.DropdownOption(task) for task in initial_options],
+        width=250
     )
+
+    set_task = ft.TextField(hint_text="Enter task name")
+    #task_list = ft.Container(content=[task_items])
+    summary_task_field = ft.TextField(
+        value="\n".join(task_items),
+        multiline=True, read_only=True, visible=True, height=300)
+
+    async def handle_task_list(e):
+        task = set_task.value
+
+        # 空文字の場合は処理を中断する（ガード処理）
+        if not task:
+            return
+        
+        if task not in task_items:
+            task_items.append(task)
+            task_dropdown.options.append(ft.DropdownOption(task))
+
+        # task_items全体をJSON化して保存する
+        await ft.SharedPreferences().set("task_items", json.dumps(task_items))
+        # task_itemsの中身を改行で結合して表示する
+        summary_task_field.value = "\n".join(task_items)
+        set_task.value = ""
+        page.update()
+
+    set_task_btn = ft.TextButton("Set", on_click=handle_task_list)
 
     timer_text = ft.Text("00:00:00", size=45, weight="bold")
     status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
@@ -178,12 +211,13 @@ async def main(page: ft.Page):
     expand=True,
     content=ft.Tabs(
         selected_index=0,
-        length=2,
+        length=3,
         content=ft.Column(
         controls=[
             ft.TabBar(
-                tabs=[ft.Tab(label="Main"),
-                      ft.Tab(label="Settings", icon=ft.Icons.SETTINGS)]),
+                tabs=[ft.Tab(label="Main", icon=ft.Icons.HOURGLASS_BOTTOM),
+                      ft.Tab(label="Settings", icon=ft.Icons.SETTINGS),
+                      ft.Tab(label="Calendar", icon=ft.Icons.CALENDAR_MONTH)]),
     
             ft.TabBarView(
                 expand=True,
@@ -207,29 +241,12 @@ async def main(page: ft.Page):
                             summary_text_field,
                             ], horizontal_alignment="center")
                             ),
-                    ft.Container(content=ft.Text("This is Settings page"))
+                    ft.Container(content=ft.Column([ft.Row(controls=[set_task, set_task_btn]), summary_task_field])),
+                    ft.Container(content=ft.Text("Calendar Page"))
         ])])))
     
     page.add(
         tab_views,
-        #tab_lists,
-        #ft.Column([
-        #    aot_switch,
-        #    task_dropdown,
-        #    ft.Container(timer_text, padding=20),
-        #    status_label,
-        #    ft.Divider(),
-        #    start_btn,
-        #    pause_btn,
-        #    resume_btn,
-        #    ft.Container(finish_btn, margin=ft.Margin.only(top=10)),
-        #    ft.Divider(),
-        #    ft.Row([
-        #        ft.TextButton("📊 Log Copy", on_click=toggle_summary),
-        #        ft.TextButton("🗑️ Clear", on_click=reset_history)
-        #    ], alignment="center"),
-        #    summary_text_field,
-        #], horizontal_alignment="center")
     )
 
     # リセットダイアログ
