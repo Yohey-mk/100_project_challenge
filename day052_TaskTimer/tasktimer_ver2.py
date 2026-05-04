@@ -6,7 +6,7 @@
 import flet as ft
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 async def main(page: ft.Page):
     page.title = "TaskTracker"
@@ -154,6 +154,11 @@ async def main(page: ft.Page):
     summary_task_field = ft.TextField(
         value="\n".join(task_items),
         multiline=True, read_only=True, visible=True, height=300)
+    
+    # 編集モード切替用のボタン
+    edit_list_btn = ft.Button("EDIT", icon=ft.Icons.EDIT)
+    save_list_btn = ft.Button("SAVE", icon=ft.Icons.SAVE, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, visible=False)
+    cancel_list_btn = ft.Button("CANCEL", icon=ft.Icons.CANCEL, visible=False)
 
     async def handle_task_list(e):
         task = set_task.value
@@ -164,7 +169,7 @@ async def main(page: ft.Page):
         
         if task not in task_items:
             task_items.append(task)
-            task_dropdown.options.append(ft.DropdownOption(task))
+            task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
 
         # task_items全体をJSON化して保存する
         await ft.SharedPreferences().set("task_items", json.dumps(task_items))
@@ -173,7 +178,100 @@ async def main(page: ft.Page):
         set_task.value = ""
         page.update()
 
+    async def handle_edit(e):
+        summary_task_field.read_only = False
+        edit_list_btn.visible = False
+        save_list_btn.visible = True
+        cancel_list_btn.visible = True
+        page.update()
+    
+    async def handle_cancel(e):
+        #キャンセル時は保存されている元のtask_itemsに表示を戻す
+        summary_task_field.value = "\n".join(task_items)
+        #閲覧モードに戻す
+        summary_task_field.read_only =True
+        edit_list_btn.visible = True
+        save_list_btn.visible = False
+        cancel_list_btn.visible = False
+        page.update()
+
+    async def handle_save(e):
+        nonlocal task_items
+
+        raw_text = summary_task_field.value
+        # 新しいリストを作成
+        new_task_list = [x for x in raw_text.split("\n") if x != ""]
+        # task_list自体を新しいリストで上書き
+        task_items = new_task_list
+        # ローカルストレージに保存
+        await ft.SharedPreferences().set("task_items", json.dumps(new_task_list))
+        # 最新のtask_itemsを使ってドロップダウンを更新
+        task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
+        page.show_dialog(ft.SnackBar(ft.Text("タスクリストを更新しました！")))
+
+        summary_task_field.read_only = True
+        edit_list_btn.visible = True
+        save_list_btn.visible = False
+        cancel_list_btn.visible = False
+        page.update()
+
+
+    edit_list_btn.on_click = handle_edit
+    save_list_btn.on_click = handle_save
+    cancel_list_btn.on_click = handle_cancel
+
+#    async def edit_task_list(e):
+#        for task in task_items:
+#            btn = ft.TextButton(
+#                content=ft.Text(task),
+#                on_click=lambda e, t=task: None,
+#                icon_color=ft.Colors.RED,
+#            )
+#            file_list_column.controls.append(btn)
+#
+#        page.update()
+#
+#    # task編集スペース
+#    edit_textfield = ft.TextField(label="新しいタスク名")
+#    editing_index = -1 #現在編集しているタスクのリスト内番号を記録する変数
+#
+#    async def save_edited_task(e):
+#        nonlocal editing_index
+#        new_task_name = edit_textfield.value
+#        task_items[editing_index].value = new_task_name
+#        await ft.SharedPreferences().set("task_items", new_task_name)
+#        task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
+#        await render_task_list()
+#        page.update()
+#
+#    async def render_task_list():
+#        file_list_column.controls.clear()
+#
+#        for i, task in enumerate(task_items):
+#            task_row = ft.Row(controls=[
+#                ft.Text(f"{i}: "),
+#                ft.IconButton(icon=ft.Icons.EDIT, on_click=edit_task_list)
+#            ])
+#        file_list_column.controls.append(task_row)
+#
+#        page.update()
+#
+#    file_list_column = ft.Column(scroll="auto", expand=True, tight=True)
+#    file_list_container = ft.Container(
+#        content=ft.Column(
+#            controls=[file_list_column],
+#            scroll=ft.ScrollMode.ALWAYS,
+#        ),
+#        height=100,
+#        #width=500,
+#        padding=10,
+#        border=ft.Border.all(2, ft.Colors.GREY_600),
+#        border_radius=ft.BorderRadius.all(10),
+#        expand=True,
+#    )
+
     set_task_btn = ft.TextButton("Set", on_click=handle_task_list)
+#    edit_task_btn = ft.Button("EDIT", icon=ft.Icons.EDIT, on_click=edit_task_list)
 
     timer_text = ft.Text("00:00:00", size=45, weight="bold")
     status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
@@ -205,6 +303,10 @@ async def main(page: ft.Page):
         await ft.SharedPreferences().set("task_history", "[]")
         page.update()
 
+    # Datetime / Calendar 関連
+    today = date.today().strftime('%Y-%m-%d')
+    date_display = ft.Text(today, size=20)
+
     # --- レイアウト ---
 
     tab_views = ft.SafeArea(
@@ -225,6 +327,7 @@ async def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column([
                             aot_switch,
+                            date_display,
                             task_dropdown,
                             ft.Container(timer_text, padding=20),
                             status_label,
@@ -241,7 +344,10 @@ async def main(page: ft.Page):
                             summary_text_field,
                             ], horizontal_alignment="center")
                             ),
-                    ft.Container(content=ft.Column([ft.Row(controls=[set_task, set_task_btn]), summary_task_field])),
+                    ft.Container(content=ft.Column([ft.Row(controls=[set_task, set_task_btn]),
+                                                    ft.Row([edit_list_btn, save_list_btn, cancel_list_btn]),
+                                                    summary_task_field,
+                                                    ])),
                     ft.Container(content=ft.Text("Calendar Page"))
         ])])))
     
