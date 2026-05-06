@@ -7,6 +7,7 @@ import flet as ft
 import asyncio
 import json
 from datetime import datetime, date
+from calendar_view import render_calendar_ui
 
 async def main(page: ft.Page):
     page.title = "TaskTracker"
@@ -146,7 +147,7 @@ async def main(page: ft.Page):
     task_dropdown = ft.Dropdown(
         value="Select task",
         options=[ft.DropdownOption(task) for task in initial_options],
-        width=250
+        width=250,
     )
 
     set_task = ft.TextField(hint_text="Enter task name")
@@ -273,7 +274,7 @@ async def main(page: ft.Page):
     set_task_btn = ft.TextButton("Set", on_click=handle_task_list)
 #    edit_task_btn = ft.Button("EDIT", icon=ft.Icons.EDIT, on_click=edit_task_list)
 
-    timer_text = ft.Text("00:00:00", size=45, weight="bold")
+    timer_text = ft.Text("00:00:00", size=30, weight="bold")
     status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
 
     start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=200)
@@ -284,33 +285,65 @@ async def main(page: ft.Page):
     summary_text_field = ft.TextField(multiline=True, read_only=True, visible=True, height=100, text_size=11)
 
     async def toggle_summary(e):
-        summary_text_field.visible = summary_text_field.visible
-        if summary_text_field.visible:
-            lines = ["Date\tTask\tStart\tEnd\tPauses\tDuration"]
-            for s in task_history:
+        # Copyボタンを押した時点の「今日の日付」を取得
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        lines = ["Date\tTask\tStart\tEnd\tPauses\tDuration"]
+        for s in task_history:
+            if s['date'] == today_str:
                 pauses_str = ", ".join(
                     f"{p['start']}\t{p['end'] if p['end'] else '...'}"
                     for p in s.get("pauses", [])
                 )
                 lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}\t{get_formatted_time(s['duration_seconds'])}")
-            summary_text_field.value = "\n".join(lines)
-            await ft.Clipboard().set(summary_text_field.value)
-            page.show_dialog(ft.SnackBar(ft.Text("コピーしました！")))
+
+        if len(lines) == 1:
+            page.show_dialog(ft.SnackBar(ft.Text("本日の記録はまだありません")))
+            return
+        
+        summary_text_field.value = "\n".join(lines)
+        summary_text_field.visible = True
+        await ft.Clipboard().set(summary_text_field.value)
+        page.show_dialog(ft.SnackBar(ft.Text("Copied!")))
         page.update()
+        #summary_text_field.visible = summary_text_field.visible
+        #if summary_text_field.visible:
+        #    lines = ["Date\tTask\tStart\tEnd\tPauses\tDuration"]
+        #    for s in task_history:
+        #        pauses_str = ", ".join(
+        #            f"{p['start']}\t{p['end'] if p['end'] else '...'}"
+        #            for p in s.get("pauses", [])
+        #        )
+        #        lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}\t{get_formatted_time(s['duration_seconds'])}")
+        #    summary_text_field.value = "\n".join(lines)
+        #    await ft.Clipboard().set(summary_text_field.value)
+        #    page.show_dialog(ft.SnackBar(ft.Text("コピーしました！")))
 
     async def reset_history(e):
         task_history.clear()
+        summary_text_field.value = ""
         await ft.SharedPreferences().set("task_history", "[]")
         page.update()
 
     # Datetime / Calendar 関連
     today = date.today().strftime('%Y-%m-%d')
-    date_display = ft.Text(today, size=20)
+    date_display = ft.Text(today, size=16)
+
+
+    def recreate_tabviews(e):
+        page.controls.clear()
+        page.add(tab_views)
+        page.update()
+
+    calendar_view_btn = ft.Button(
+        "Show Calendar",
+        icon=ft.Icons.CALENDAR_TODAY,
+        on_click=lambda e: render_calendar_ui(page, datetime.now().year, datetime.now().month, recreate_tabviews))
 
     # --- レイアウト ---
 
     tab_views = ft.SafeArea(
     expand=True,
+    align=ft.Alignment.CENTER,
     content=ft.Tabs(
         selected_index=0,
         length=3,
@@ -348,7 +381,10 @@ async def main(page: ft.Page):
                                                     ft.Row([edit_list_btn, save_list_btn, cancel_list_btn]),
                                                     summary_task_field,
                                                     ])),
-                    ft.Container(content=ft.Text("Calendar Page"))
+                    ft.Container(content=ft.Column([
+                        ft.Text("Calendar Page"),
+                        calendar_view_btn,
+                        ]))
         ])])))
     
     page.add(
