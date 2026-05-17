@@ -287,7 +287,7 @@ async def main(page: ft.Page):
     async def toggle_summary(e):
         # Copyボタンを押した時点の「今日の日付」を取得
         today_str = datetime.now().strftime("%Y-%m-%d")
-        lines = ["Date\tTask\tStart\tEnd\tPauses\tDuration"]
+        lines = []
         for s in task_history:
             if s['date'] == today_str:
                 pauses_str = ", ".join(
@@ -324,6 +324,27 @@ async def main(page: ft.Page):
         await ft.SharedPreferences().set("task_history", "[]")
         page.update()
 
+    # 日付のログを表示させる
+    def show_day_summary(selected_date: str):
+        # 1.その日のデータだけを抽出
+        day_logs = [s for s in task_history if s['date'] == selected_date]
+
+        if not day_logs:
+            content_text = "この日の記録はありません"
+        else:
+            lines = []
+            for s in day_logs:
+                lines.append(f"{s['task']}\t{s['start_time']}\t{s['end_time']}")
+            content_text = "\n".join(lines)
+        
+        # 3. dialog作成
+        day_dialog = ft.AlertDialog(
+            title=ft.Text(f"{selected_date}の記録"),
+            content=ft.TextField(value=content_text, multiline=True, read_only=True),
+            actions=[ft.TextButton("Close", on_click=lambda e:page.pop_dialog())]
+        )
+        page.show_dialog(day_dialog)
+
     # Datetime / Calendar 関連
     today = date.today().strftime('%Y-%m-%d')
     date_display = ft.Text(today, size=16)
@@ -337,7 +358,14 @@ async def main(page: ft.Page):
     calendar_view_btn = ft.Button(
         "Show Calendar",
         icon=ft.Icons.CALENDAR_TODAY,
-        on_click=lambda e: render_calendar_ui(page, datetime.now().year, datetime.now().month, recreate_tabviews))
+        on_click=lambda e: render_calendar_ui(
+            page,
+            datetime.now().year,
+            datetime.now().month,
+            recreate_tabviews,
+            show_day_summary
+        )
+    )
 
     # --- レイアウト ---
 
