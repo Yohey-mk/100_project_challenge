@@ -151,7 +151,8 @@ async def main(page: ft.Page):
     )
 
     set_task = ft.TextField(hint_text="Enter task name")
-    #task_list = ft.Container(content=[task_items])
+    set_category = ft.TextField(hint_text="Enter category")
+
     summary_task_field = ft.TextField(
         value="\n".join(task_items),
         multiline=True, read_only=True, visible=True, height=300)
@@ -163,13 +164,15 @@ async def main(page: ft.Page):
 
     async def handle_task_list(e):
         task = set_task.value
+        category = set_category.value
 
         # 空文字の場合は処理を中断する（ガード処理）
-        if not task:
+        if not task or not category:
             return
         
         if task not in task_items:
-            task_items.append(task)
+            category_and_task = "\t".join([category, task])
+            task_items.append(category_and_task)
             task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
 
         # task_items全体をJSON化して保存する
@@ -221,63 +224,12 @@ async def main(page: ft.Page):
     save_list_btn.on_click = handle_save
     cancel_list_btn.on_click = handle_cancel
 
-#    async def edit_task_list(e):
-#        for task in task_items:
-#            btn = ft.TextButton(
-#                content=ft.Text(task),
-#                on_click=lambda e, t=task: None,
-#                icon_color=ft.Colors.RED,
-#            )
-#            file_list_column.controls.append(btn)
-#
-#        page.update()
-#
-#    # task編集スペース
-#    edit_textfield = ft.TextField(label="新しいタスク名")
-#    editing_index = -1 #現在編集しているタスクのリスト内番号を記録する変数
-#
-#    async def save_edited_task(e):
-#        nonlocal editing_index
-#        new_task_name = edit_textfield.value
-#        task_items[editing_index].value = new_task_name
-#        await ft.SharedPreferences().set("task_items", new_task_name)
-#        task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
-#        await render_task_list()
-#        page.update()
-#
-#    async def render_task_list():
-#        file_list_column.controls.clear()
-#
-#        for i, task in enumerate(task_items):
-#            task_row = ft.Row(controls=[
-#                ft.Text(f"{i}: "),
-#                ft.IconButton(icon=ft.Icons.EDIT, on_click=edit_task_list)
-#            ])
-#        file_list_column.controls.append(task_row)
-#
-#        page.update()
-#
-#    file_list_column = ft.Column(scroll="auto", expand=True, tight=True)
-#    file_list_container = ft.Container(
-#        content=ft.Column(
-#            controls=[file_list_column],
-#            scroll=ft.ScrollMode.ALWAYS,
-#        ),
-#        height=100,
-#        #width=500,
-#        padding=10,
-#        border=ft.Border.all(2, ft.Colors.GREY_600),
-#        border_radius=ft.BorderRadius.all(10),
-#        expand=True,
-#    )
-
-    set_task_btn = ft.TextButton("Set", on_click=handle_task_list)
-#    edit_task_btn = ft.Button("EDIT", icon=ft.Icons.EDIT, on_click=edit_task_list)
+    set_task_btn = ft.Button("SET TASK", on_click=handle_task_list, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=200)
 
     timer_text = ft.Text("00:00:00", size=30, weight="bold")
     status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
 
-    start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=200)
+    start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=100)
     pause_btn = ft.Button("PAUSE", icon=ft.Icons.PAUSE, on_click=handle_pause, bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, width=200, visible=False)
     resume_btn = ft.Button("RESUME", icon=ft.Icons.PLAY_CIRCLE, on_click=handle_resume, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, width=200, visible=False)
     finish_btn = ft.Button("FINISH", icon=ft.Icons.CHECK, on_click=handle_finish, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, width=200, visible=False)
@@ -294,9 +246,9 @@ async def main(page: ft.Page):
                     f"{p['start']}\t{p['end'] if p['end'] else '...'}"
                     for p in s.get("pauses", [])
                 )
-                lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}\t{get_formatted_time(s['duration_seconds'])}")
+                lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}")
 
-        if len(lines) == 1:
+        if not lines:
             page.show_dialog(ft.SnackBar(ft.Text("本日の記録はまだありません")))
             return
         
@@ -305,18 +257,6 @@ async def main(page: ft.Page):
         await ft.Clipboard().set(summary_text_field.value)
         page.show_dialog(ft.SnackBar(ft.Text("Copied!")))
         page.update()
-        #summary_text_field.visible = summary_text_field.visible
-        #if summary_text_field.visible:
-        #    lines = ["Date\tTask\tStart\tEnd\tPauses\tDuration"]
-        #    for s in task_history:
-        #        pauses_str = ", ".join(
-        #            f"{p['start']}\t{p['end'] if p['end'] else '...'}"
-        #            for p in s.get("pauses", [])
-        #        )
-        #        lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}\t{get_formatted_time(s['duration_seconds'])}")
-        #    summary_text_field.value = "\n".join(lines)
-        #    await ft.Clipboard().set(summary_text_field.value)
-        #    page.show_dialog(ft.SnackBar(ft.Text("コピーしました！")))
 
     async def reset_history(e):
         task_history.clear()
@@ -334,7 +274,11 @@ async def main(page: ft.Page):
         else:
             lines = []
             for s in day_logs:
-                lines.append(f"{s['task']}\t{s['start_time']}\t{s['end_time']}")
+                pauses_str = ", ".join(
+                    f"{p['start']}\t{p['end'] if p['end'] else '...'}"
+                    for p in s.get("pauses", [])
+                )
+                lines.append(f"{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}")
             content_text = "\n".join(lines)
         
         # 3. dialog作成
@@ -405,7 +349,8 @@ async def main(page: ft.Page):
                             summary_text_field,
                             ], horizontal_alignment="center")
                             ),
-                    ft.Container(content=ft.Column([ft.Row(controls=[set_task, set_task_btn]),
+                    ft.Container(content=ft.Column([ft.Column(controls=[set_category, set_task, set_task_btn]),
+                                                    ft.Divider(),
                                                     ft.Row([edit_list_btn, save_list_btn, cancel_list_btn]),
                                                     summary_task_field,
                                                     ])),
@@ -424,8 +369,8 @@ async def main(page: ft.Page):
         title=ft.Text("履歴のリセット"),
         content=ft.Text("すべての履歴を削除しますか？"),
         actions=[
-            ft.TextButton("削除", on_click=lambda _: (task_history.clear(), ft.SharedPreferences().set("task_history", "[]"), page.close(reset_dialog), page.update())),
-            ft.TextButton("キャンセル", on_click=lambda _: page.close(reset_dialog))
+            ft.TextButton("削除", on_click=lambda _: (task_history.clear(), ft.SharedPreferences().set("task_history", "[]"), page.pop_dialog(), page.update())),
+            ft.TextButton("キャンセル", on_click=lambda _: page.pop_dialog())
         ]
     )
 
