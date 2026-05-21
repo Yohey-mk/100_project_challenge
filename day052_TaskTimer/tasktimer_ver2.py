@@ -135,7 +135,7 @@ async def main(page: ft.Page):
         update_ui_state()
 
     # --- 📊 UIコンポーネント ---
-    aot_switch = ft.Switch(label="Always On Top", value=True, scale=0.9)
+    aot_switch = ft.Switch(label="Always On Top", value=True, scale=0.85,)
     def toggle_aot(e):
         page.window.always_on_top = e.control.value
         page.update()
@@ -364,7 +364,7 @@ async def main(page: ft.Page):
                                 #ft.TextButton("🗑️ Clear", on_click=reset_history)
                             ], alignment="center"),
                             summary_text_field,
-                            ], horizontal_alignment="center")
+                            ], scroll=ft.ScrollMode.AUTO, horizontal_alignment="center")
                             ),
                     ft.Container(content=ft.Column([ft.Column(controls=[set_category, set_task, set_task_btn]),
                                                     ft.Divider(),
