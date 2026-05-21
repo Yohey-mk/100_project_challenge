@@ -26,7 +26,7 @@ async def main(page: ft.Page):
 
     # --- 💾 データのロード ---
     async def load_data():
-        nonlocal task_history, task_items, summary_task_field
+        nonlocal task_history, task_items, summary_task_field, summary_category_field
         saved_str = await ft.SharedPreferences().get("task_history")
         saved_task_items = await ft.SharedPreferences().get("task_items")
 
@@ -153,6 +153,10 @@ async def main(page: ft.Page):
     set_task = ft.TextField(hint_text="Enter task name")
     set_category = ft.TextField(hint_text="Enter category")
 
+    summary_category_field = ft.TextField(
+        value="\n".join(task_items),
+        multiline=True, read_only=True, visible=True, height=300
+    )
     summary_task_field = ft.TextField(
         value="\n".join(task_items),
         multiline=True, read_only=True, visible=True, height=300)
@@ -171,19 +175,21 @@ async def main(page: ft.Page):
             return
         
         if task not in task_items:
-            category_and_task = "\t".join([category, task])
+            category_and_task = f"{category} / {task}"
             task_items.append(category_and_task)
             task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
 
         # task_items全体をJSON化して保存する
         await ft.SharedPreferences().set("task_items", json.dumps(task_items))
         # task_itemsの中身を改行で結合して表示する
-        summary_task_field.value = "\n".join(task_items)
+        #summary_task_field.value = "\n".join(task_items)
+        summary_category_field.value = "\n".join(task_items)
         set_task.value = ""
         page.update()
 
     async def handle_edit(e):
-        summary_task_field.read_only = False
+        #summary_task_field.read_only = False
+        summary_category_field.read_only = False
         edit_list_btn.visible = False
         save_list_btn.visible = True
         cancel_list_btn.visible = True
@@ -191,9 +197,11 @@ async def main(page: ft.Page):
     
     async def handle_cancel(e):
         #キャンセル時は保存されている元のtask_itemsに表示を戻す
-        summary_task_field.value = "\n".join(task_items)
+        #summary_task_field.value = "\n".join(task_items)
+        summary_category_field.value = "\n".join(task_items)
         #閲覧モードに戻す
-        summary_task_field.read_only =True
+        #summary_task_field.read_only =True
+        summary_category_field.read_only = True
         edit_list_btn.visible = True
         save_list_btn.visible = False
         cancel_list_btn.visible = False
@@ -202,7 +210,8 @@ async def main(page: ft.Page):
     async def handle_save(e):
         nonlocal task_items
 
-        raw_text = summary_task_field.value
+        #raw_text = summary_task_field.value
+        raw_text = summary_category_field.value
         # 新しいリストを作成
         new_task_list = [x for x in raw_text.split("\n") if x != ""]
         # task_list自体を新しいリストで上書き
@@ -213,7 +222,8 @@ async def main(page: ft.Page):
         task_dropdown.options = [ft.DropdownOption(t) for t in task_items]
         page.show_dialog(ft.SnackBar(ft.Text("タスクリストを更新しました！")))
 
-        summary_task_field.read_only = True
+        #summary_task_field.read_only = True
+        summary_category_field.read_only = True
         edit_list_btn.visible = True
         save_list_btn.visible = False
         cancel_list_btn.visible = False
@@ -229,7 +239,7 @@ async def main(page: ft.Page):
     timer_text = ft.Text("00:00:00", size=30, weight="bold")
     status_label = ft.Text("Status: READY", color=ft.Colors.GREY_700)
 
-    start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=100)
+    start_btn = ft.Button("START", icon=ft.Icons.PLAY_ARROW, on_click=handle_start, bgcolor=ft.Colors.BLUE, color=ft.Colors.WHITE, width=150)
     pause_btn = ft.Button("PAUSE", icon=ft.Icons.PAUSE, on_click=handle_pause, bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE, width=200, visible=False)
     resume_btn = ft.Button("RESUME", icon=ft.Icons.PLAY_CIRCLE, on_click=handle_resume, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE, width=200, visible=False)
     finish_btn = ft.Button("FINISH", icon=ft.Icons.CHECK, on_click=handle_finish, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE, width=200, visible=False)
@@ -246,7 +256,9 @@ async def main(page: ft.Page):
                     f"{p['start']}\t{p['end'] if p['end'] else '...'}"
                     for p in s.get("pauses", [])
                 )
-                lines.append(f"{s['date']}\t{s['task']}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}")
+                excel_task = s['task'].replace(" / ", "\t") #EXCEL用にタブを分けてセルに貼り付けられるように変換する
+
+                lines.append(f"{s['date']}\t{excel_task}\t{s['start_time']}\t{s['end_time']}\t{pauses_str}")
 
         if not lines:
             page.show_dialog(ft.SnackBar(ft.Text("本日の記録はまだありません")))
@@ -311,6 +323,10 @@ async def main(page: ft.Page):
         )
     )
 
+    hint_text_for_editing = ft.Text('" / "でカテゴリとタスクを区切ってください',
+                                    size=16,
+                                    )
+
     # --- レイアウト ---
 
     tab_views = ft.SafeArea(
@@ -352,11 +368,13 @@ async def main(page: ft.Page):
                     ft.Container(content=ft.Column([ft.Column(controls=[set_category, set_task, set_task_btn]),
                                                     ft.Divider(),
                                                     ft.Row([edit_list_btn, save_list_btn, cancel_list_btn]),
-                                                    summary_task_field,
+                                                    hint_text_for_editing,
+                                                    summary_category_field
                                                     ])),
                     ft.Container(content=ft.Column([
                         ft.Text("Calendar Page"),
                         calendar_view_btn,
+                        ft.TextButton("🗑️ Clear", on_click=reset_history),
                         ]))
         ])])))
     
