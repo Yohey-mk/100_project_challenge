@@ -338,6 +338,7 @@ async def main(page: ft.Page):
         content=ft.Column(
         controls=[
             ft.TabBar(
+                tab_alignment=ft.TabAlignment.CENTER,
                 tabs=[ft.Tab(label="Main", icon=ft.Icons.HOURGLASS_BOTTOM),
                       ft.Tab(label="Settings", icon=ft.Icons.SETTINGS),
                       ft.Tab(label="Calendar", icon=ft.Icons.CALENDAR_MONTH)]),
@@ -360,7 +361,7 @@ async def main(page: ft.Page):
                             ft.Divider(),
                             ft.Row([
                                 ft.TextButton("📊 Log Copy", on_click=toggle_summary),
-                                ft.TextButton("🗑️ Clear", on_click=reset_history)
+                                #ft.TextButton("🗑️ Clear", on_click=reset_history)
                             ], alignment="center"),
                             summary_text_field,
                             ], horizontal_alignment="center")
@@ -374,7 +375,7 @@ async def main(page: ft.Page):
                     ft.Container(content=ft.Column([
                         ft.Text("Calendar Page"),
                         calendar_view_btn,
-                        ft.TextButton("🗑️ Clear", on_click=reset_history),
+                        ft.TextButton("🗑️ Clear History", on_click=reset_history),
                         ]))
         ])])))
     
