@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Realtime Todo App</title>
+</head>
+<body>
+    <h1>Realtime ToDo</h1>
+    <input id="taskInput">
+    <button onclick="sendTask()">追加</button>
+
+    <ul id="taskList"></ul>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8000/ws")
+        // メッセージを受信したときの処理
+        ws.onmessage = (event) => {
+            console.log("受信データ:", event.data)
+
+            //1. ul要素を取得
+            const list = document.getElementById("taskList")
+            //2. 新しいli要素を作成
+            const li = document.createElement("li")
+            //3. li要素のテキストに受信したデータをセット
+            li.textContent = event.data
+            // 4. ul要素の中にli要素を追加
+            list.appendChild(li)
+        }
+
+        // 追加ボタンを押したときの処理
+        function sendTask(){
+            const input = document.getElementById("taskInput")
+            ws.send(input.value)
+
+            input.value = "" // 送信後に入力欄をカラニする
+        }
+    </script>
+</body>
+
+</html>
