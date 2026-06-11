@@ -2,28 +2,85 @@
 <html>
 <head>
     <title>Realtime Todo App</title>
+    <style>
+        .dark-theme{
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
     <h1>Realtime ToDo</h1>
+    <button onclick="toggleTheme()">テーマ切り替え</button>
+    <br><br>
+
     <input id="taskInput">
     <button onclick="sendTask()">追加</button>
+    <button onclick="clearAllTasks()">すべて削除</button>
+
+    <button onclick="exportCSV()">Download CSV</button>
 
     <ul id="taskList"></ul>
 
     <script>
         const ws = new WebSocket("ws://localhost:8000/ws")
+
+        if (localStorage.getItem("theme") === "dark"){
+            // theme = darkならばダークモードのクラスを追加
+            document.body.classList.add("dark-theme")
+        }
         // メッセージを受信したときの処理
         ws.onmessage = (event) => {
             console.log("受信データ:", event.data)
 
             //1. ul要素を取得
             const list = document.getElementById("taskList")
-            //2. 新しいli要素を作成
-            const li = document.createElement("li")
-            //3. li要素のテキストに受信したデータをセット
-            li.textContent = event.data
-            // 4. ul要素の中にli要素を追加
-            list.appendChild(li)
+            // もし受信したデータが"CLEAR_ALL"なら、リストの中身を空にする
+            if (event.data === "CLEAR_ALL"){
+                list.innerHTML = "" // HTMLの中身を空っぽにするコード
+            }
+
+            else if (event.data.startsWith("DELETE_TASK:")) {
+                // 削除スべきタスクのテキストを抽出
+                const targetText = event.data.replace("DELETE_TASK:", "")
+                // リストの中にあるすべての"li"要素を取得
+                const items = list.getElementsByTagName("li")
+                // 上から順番に確認してテキストが一致するものを消す
+                for (let i = 0; i < items.length; i++) {
+                    // 要素のテキストが、削除対象のテキストから始まっていたら
+                    if (items[i].textContent.startsWith(targetText)) {
+                        // その要素自体を画面から削除する
+                        items[i].remove()
+                        break
+                    }
+                }
+            }
+            // そうでなければ、通常通りリストにタスクを追加する
+            else {
+                const li = document.createElement("li")
+                li.textContent = event.data + " " // ボタンとの間に少し空白を入れる
+                // タスクをクリックした時の処理
+                li.onclick = () => {
+                    // クリップボードにテキストを書き込む
+                    navigator.clipboard.writeText(event.data).then(() => {
+                        // コピーが成功したらポップアップでお知らせ
+                        alert("Copied: " + event.data)
+                    })
+                }
+                // 個別削除ボタン
+                // 1. 新しいHTML要素を作成する
+                const deleteBtn = document.createElement("button")
+                deleteBtn.textContent = "✖"
+                // 2. ボタンが押された時の処理
+                deleteBtn.onclick = (e) => {
+                    // 親要素(li)のクリックイベントのコピー機能が誤爆するのを防ぐ
+                    e.stopPropagation()
+                    // サーバに「このタスクを消して」という合図とタスク内容を合体させて送信
+                    ws.send("DELETE_TASK:" + event.data)
+                }
+                li.appendChild(deleteBtn)
+                list.appendChild(li)
+            }
         }
 
         // 追加ボタンを押したときの処理
@@ -31,7 +88,31 @@
             const input = document.getElementById("taskInput")
             ws.send(input.value)
 
-            input.value = "" // 送信後に入力欄をカラニする
+            input.value = "" // 送信後に入力欄を空にする
+        }
+        // すべて削除ボタン用の処理
+        function clearAllTasks(){
+            // サーバーにCLEAR_ALLを送信する
+            ws.send("CLEAR_ALL")
+        }
+
+        // CSV Download function
+        function exportCSV() {
+            window.location.href = "/export"
+        }
+
+        // テーマ切り替え用の処理
+        function toggleTheme(){
+            // bodyタグのクラスをつけ外しする
+            document.body.classList.toggle("dark-theme")
+            // 現在の設定がdark-themeか確認
+            if (document.body.classList.contains("dark-theme")) {
+                // dark themeになったらブラウザのメモにはtheme=darkと書き込む
+                localStorage.setItem("theme", "dark")
+            } else {
+                // light themeに戻ったら、メモからthemeの記録を削除する
+                localStorage.removeItem("theme")
+            }
         }
     </script>
 </body>
