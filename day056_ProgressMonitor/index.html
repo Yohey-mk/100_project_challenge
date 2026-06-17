@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>バックグラウンド処理モニタ</title>
+        <style>
+            body { background-color: #1e1e1e; color: #ffffff; padding: 50px; font-family: sans-serif; }
+            /* プログレスバーの背景 */
+            #progressBar { width: 100%; height: 30px; background-color: #555; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+            /* プログレスバーの中身（緑色の帯）を最初は幅を0％にしておく */
+            #progressFill { width: 0%; height: 100%; background-color: #4CAF50;}
+        </style>
+    </head>
+
+    <body>
+        <h1>重いデータ処理（モック）</h1>
+        <button onclick="startProcess()">処理を開始する</button>
+
+        <div style="margin-top: 30px;">
+            <p>進捗: <span id="statusText">0</span>%</p>
+            <div id="progressBar">
+                <div id="progressFill"></div>
+            </div>
+        </div>
+
+        <script>
+            const ws = new WebSocket("ws://localhost:8000/ws")
+            const progressFill = document.getElementById("progressFill")
+            const statusText = document.getElementById("statusText")
+
+            // サーバから進捗（数字）を受信したときの処理
+            ws.onmessage = (event) => {
+                const currentProgress = event.data // サーバから来た数字
+                // 1. テキストの数字を更新
+                statusText.innerText = currentProgress
+                // 2. 緑帯の幅を％で更新
+                progressFill.style.width = currentProgress + "%"
+            }
+
+            // 開始ボタンを押した時の処理
+            function startProcess() {
+                // 表示を０にリセット
+                progressFill.style.width = "0%"
+                statusText.innerText = "0"
+                // サーバに処理開始を指示する（STARTという文字列を送る）
+                ws.send("START")
+            }
+        </script>
+    </body>
+</html>
