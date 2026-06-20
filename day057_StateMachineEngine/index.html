@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ステートエンジンマシン</title>
+         <style>
+            body { background-color: #1e1e1e; color: #ffffff; padding: 50px; font-family: sans-serif; text-align: center; }
+            button { padding: 15px 30px; margin: 10px; font-size: 16px; cursor: pointer; border-radius: 8px; border: none; }
+            button:disabled { background-color: #555; cursor: not-allowed; color: #888; }
+            .running { background-color: green; color: white; }
+            .paused { background-color: orange; color: black; }
+            .finished { background-color: red; color: white; }
+         </style>
+    </head>
+    <body>
+        <h1>タスク進行コントローラ</h1>
+        <h2 id="statusDisplay">現在の状態: NOT_STARTED</h2>
+
+        <button id="btn_RUNNING" onclick="changeState('RUNNING')">START / RESUME</button>
+        <button id="btn_PAUSED" onclick="changeState('PAUSED')">PAUSE</button>
+        <button id="btn_FINISHED" onclick="changeState('FINISHED')">FINISHED</button>
+
+        <script>
+            const ws = new WebSocket("ws://localhost:8000/ws")
+            const statusDisplay = document.getElementById("statusDisplay")
+            // サーバからデータを受信したときの処理
+            ws.onmessage = (event) => {
+                const data = event.data
+                // データが"STATE:"から始まっていたら状態更新の合図
+                if (data.startsWith("STATE:")) {
+                    // STATE:RUNNINGを:で分割して右側（RUNNING）を取り出す, trim()で余計なスペースを自動で消しておく
+                    const newState = data.split(":")[1].trim()
+                    statusDisplay.innerText = "現在の状態: " + newState
+
+                    // 状態に応じてボタンの有効無効を切り替える
+                    if (newState === "NOT_STARTED") {
+                        document.getElementById("btn_RUNNING").disabled = false
+                        document.getElementById("btn_PAUSED").disabled = true
+                        document.getElementById("btn_FINISHED").disabled = true
+                    } else if (newState === "RUNNING") {
+                        document.getElementById("btn_RUNNING").disabled = true
+                        document.getElementById("btn_PAUSED").disabled = false
+                        document.getElementById("btn_FINISHED").disabled = false
+                    } else if (newState === "PAUSED") {
+                        document.getElementById("btn_RUNNING").disabled = false
+                        document.getElementById("btn_PAUSED").disabled = true
+                        document.getElementById("btn_FINISHED").disabled = false
+                    } else if (newState === "FINISHED") {
+                        document.getElementById("btn_RUNNING").disabled = true
+                        document.getElementById("btn_PAUSED").disabled = true
+                        document.getElementById("btn_FINISHED").disabled = true
+                    } 
+                }
+                // データがERROR:から始まっていたらアラートを出す
+                else if (data.startsWith("ERROR:")) {
+                    alert(data)
+                }
+            }
+
+            // ボタンが押されたとき、サーバに変更したい状態の文字列を送る
+            function changeState(targetState) {
+                ws.send(targetState)
+            }
+        </script>
+    </body>
+</html>
